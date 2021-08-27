@@ -11,7 +11,10 @@ from models.Subscription import Subscription
 # import uuid
 from typing import Optional
 from pydantic import BaseModel
+from notifications_python_client.notifications import NotificationsAPIClient
 
+
+NOTIFY_KEY = environ.get("NOTIFY_KEY")
 
 app = FastAPI(root_path="/v1")
 
@@ -140,6 +143,7 @@ class SubscriptionEvent(BaseModel):
 @app.post("/subscription")
 async def create_subscription(list_payload: SubscriptionEvent, response: Response):
     session = db_session()
+    notifications_client = get_notify_client()
     try:
         list = session.query(List).get(list_payload.list_id)
     except SQLAlchemyError:
@@ -162,6 +166,19 @@ async def create_subscription(list_payload: SubscriptionEvent, response: Respons
         )
         session.add(subscription)
         session.commit()
+
+        if list_payload.email is not None:
+            notifications_client.send_email_notification(
+                email_address=list_payload.email,
+                template_id=list.subscribe_email_template_id,
+            )
+
+        if list_payload.phone is not None:
+            notifications_client.send_sms_notification(
+                phone_number=list_payload.phone,
+                template_id=list.subscribe_phone_template_id,
+            )
+
         return {"id": subscription.id}
     except SQLAlchemyError as err:
         log.error(err)
@@ -195,6 +212,7 @@ async def confirm(subscription_id, response: Response):
 @app.delete("/subscription/{unsubscription_id}")
 async def unsubscribe(unsubscription_id, response: Response):
     session = db_session()
+    notifications_client = get_notify_client()
     try:
         subscription = session.query(Subscription).get(unsubscription_id)
     except SQLAlchemyError:
@@ -205,11 +223,34 @@ async def unsubscribe(unsubscription_id, response: Response):
         response.status_code = status.HTTP_404_NOT_FOUND
         return {"error": "subscription not found"}
 
+    list = session.query(List).get(subscription.list_id)
+
     try:
+        email = subscription.email
+        phone = subscription.phone
         session.delete(subscription)
         session.commit()
+
+        if email is not None:
+            notifications_client.send_email_notification(
+                email_address=email,
+                template_id=list.unsubscribe_email_template_id,
+            )
+
+        if phone is not None:
+            notifications_client.send_sms_notification(
+                phone_number=phone,
+                template_id=list.unsubscribe_phone_template_id,
+            )
+
         return {"status": "OK"}
     except SQLAlchemyError as err:
         log.error(err)
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {"error": "error deleting subscription"}
+
+
+def get_notify_client():
+    return NotificationsAPIClient(
+        NOTIFY_KEY, base_url="https://api.notification.canada.ca"
+    )

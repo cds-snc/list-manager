@@ -46,42 +46,55 @@ def test_healthcheck_failure(mock_log, mock_get_db_version):
     # assert mock_log.error.assert_called_once_with(SQLAlchemyError())
 
 
-def test_create_subscription_event_with_bad_list_id():
+@patch("api_gateway.api.get_notify_client")
+def test_create_subscription_event_with_bad_list_id(mock_client):
     response = client.post("/subscription", json={"list_id": ""})
     assert response.json() == {"error": "list id is not valid"}
     assert response.status_code == 400
 
 
-def test_create_subscription_event_with_id_not_found():
+@patch("api_gateway.api.get_notify_client")
+def test_create_subscription_event_with_id_not_found(mock_client):
     response = client.post("/subscription", json={"list_id": str(uuid.uuid4())})
     assert response.json() == {"error": "list not found"}
     assert response.status_code == 404
 
 
-def test_create_subscription_event_empty_phone_and_email(list_fixture):
+@patch("api_gateway.api.get_notify_client")
+def test_create_subscription_event_empty_phone_and_email(mock_client, list_fixture):
     response = client.post("/subscription", json={"list_id": str(list_fixture.id)})
     assert response.json() == {"error": "email and phone can not be empty"}
     assert response.status_code == 400
 
 
-def test_create_succeeds_with_email(list_fixture):
+@patch("api_gateway.api.get_notify_client")
+def test_create_succeeds_with_email(mock_client, list_fixture):
     response = client.post(
         "/subscription",
         json={"email": "test@example.com", "list_id": str(list_fixture.id)},
     )
     assert response.json() == {"id": ANY}
     assert response.status_code == 200
+    mock_client().send_email_notification.assert_called_once_with(
+        email_address="test@example.com",
+        template_id="fixture_subscribe_email_template_id",
+    )
 
 
-def test_create_succeeds_with_phone(list_fixture):
+@patch("api_gateway.api.get_notify_client")
+def test_create_succeeds_with_phone(mock_client, list_fixture):
     response = client.post(
         "/subscription", json={"phone": "123456789", "list_id": str(list_fixture.id)}
     )
     assert response.json() == {"id": ANY}
     assert response.status_code == 200
+    mock_client().send_sms_notification.assert_called_once_with(
+        phone_number="123456789", template_id="fixture_subscribe_phone_template_id"
+    )
 
 
-def test_create_succeeds_with_email_and_phone(list_fixture):
+@patch("api_gateway.api.get_notify_client")
+def test_create_succeeds_with_email_and_phone(mock_client, list_fixture):
     response = client.post(
         "/subscription",
         json={
@@ -95,8 +108,9 @@ def test_create_succeeds_with_email_and_phone(list_fixture):
 
 
 @patch("api_gateway.api.db_session")
+@patch("api_gateway.api.get_notify_client")
 def test_create_succeeds_with_email_and_phone_unknown_error(
-    mock_db_session, list_fixture
+    mock_client, mock_db_session, list_fixture
 ):
     mock_session = MagicMock()
     mock_session.commit.side_effect = SQLAlchemyError()
@@ -143,27 +157,40 @@ def test_confirm_with_correct_id_unknown_error(mock_db_session, subscription_fix
     assert response.status_code == 500
 
 
-def test_unsubscribe_event_with_bad_id():
+@patch("api_gateway.api.get_notify_client")
+def test_unsubscribe_event_with_bad_id(mock_client):
     response = client.delete("/subscription/foo")
     assert response.json() == {"error": "subscription id is not valid"}
     assert response.status_code == 400
 
 
-def test_unsubscribe_event_with_id_not_found():
+@patch("api_gateway.api.get_notify_client")
+def test_unsubscribe_event_with_id_not_found(mock_client):
     response = client.delete(f"/subscription/{str(uuid.uuid4())}")
     assert response.json() == {"error": "subscription not found"}
     assert response.status_code == 404
 
 
-def test_unsubscribe_event_with_correct_id(subscription_fixture):
+@patch("api_gateway.api.get_notify_client")
+def test_unsubscribe_event_with_correct_id(mock_client, subscription_fixture):
     response = client.delete(f"/subscription/{str(subscription_fixture.id)}")
     assert response.json() == {"status": "OK"}
     assert response.status_code == 200
 
+    mock_client().send_sms_notification.assert_called_once_with(
+        phone_number="fixture_phone",
+        template_id="fixture_unsubscribe_phone_template_id",
+    )
+    mock_client().send_email_notification.assert_called_once_with(
+        email_address="fixture_email",
+        template_id="fixture_unsubscribe_email_template_id",
+    )
+
 
 @patch("api_gateway.api.db_session")
+@patch("api_gateway.api.get_notify_client")
 def test_unsubscribe_event_with_correct_id_unknown_error(
-    mock_db_session, subscription_fixture
+    mock_client, mock_db_session, subscription_fixture
 ):
     mock_session = MagicMock()
     mock_session.commit.side_effect = SQLAlchemyError()
