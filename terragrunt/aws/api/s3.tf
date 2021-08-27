@@ -1,5 +1,5 @@
 locals {
-  name_prefix               = "${var.product_name}-${var.env}"
+  name_prefix = "${var.product_name}-${var.env}"
 }
 
 module "log_bucket" {
