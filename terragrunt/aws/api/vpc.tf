@@ -6,10 +6,21 @@ module "vpc" {
   enable_flow_log   = true
 }
 
-resource "aws_network_acl_rule" "ephemeral_ports" {
+resource "aws_network_acl_rule" "https" {
   network_acl_id = module.vpc.main_nacl_id
   rule_number    = 100
-  egress         = true
+  egress         = false
+  protocol       = "tcp"
+  rule_action    = "allow"
+  cidr_block     = "0.0.0.0/0"
+  from_port      = 443
+  to_port        = 443
+}
+
+resource "aws_network_acl_rule" "ephemeral_ports" {
+  network_acl_id = module.vpc.main_nacl_id
+  rule_number    = 101
+  egress         = false
   protocol       = "tcp"
   rule_action    = "allow"
   cidr_block     = "0.0.0.0/0"
