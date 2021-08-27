@@ -18,12 +18,3 @@ resource "aws_security_group_rule" "rds_sg_egress_443" {
   cidr_blocks       = ["0.0.0.0/0"]
   security_group_id = data.aws_security_group.rds_proxy_sg.id
 }
-
-resource "aws_security_group_rule" "rds_sg_egress_5432" {
-  type              = "egress"
-  from_port         = 5432
-  to_port           = 5432
-  protocol          = "tcp"
-  security_group_id = data.aws_security_group.rds_proxy_sg.id
-  self              = true
-}
