@@ -1,6 +1,7 @@
 from os import environ
-from fastapi import FastAPI, Response, status
+from fastapi import Depends, FastAPI, Response, status
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
 from database.db import db_session
 from logger import log
 
@@ -19,13 +20,21 @@ NOTIFY_KEY = environ.get("NOTIFY_KEY")
 app = FastAPI(root_path="/v1")
 
 
+# Dependency
+def get_db():
+    db = db_session()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
 @app.get("/version")
 async def version():
     return {"version": environ.get("GIT_SHA", "unknown")}
 
 
-def get_db_version(sessionmaker):
-    session = sessionmaker()
+def get_db_version(session):
 
     query = "SELECT version_num FROM alembic_version"
     full_name = session.execute(query).fetchone()[0]
@@ -33,9 +42,9 @@ def get_db_version(sessionmaker):
 
 
 @app.get("/healthcheck")
-async def healthcheck():
+async def healthcheck(session: Session = Depends(get_db)):
     try:
-        full_name = get_db_version(db_session)
+        full_name = get_db_version(session)
         db_status = {"able_to_connect": True, "db_version": full_name}
     except SQLAlchemyError as err:
         log.error(err)
@@ -55,8 +64,7 @@ class ListPayload(BaseModel):
 
 
 @app.get("/lists")
-async def lists():
-    session = db_session()
+async def lists(session: Session = Depends(get_db)):
     lists = session.query(List).all()
     return list(
         map(
@@ -72,8 +80,7 @@ async def lists():
 
 
 @app.get("/lists/{service_id}")
-async def lists_by_service(service_id):
-    session = db_session()
+async def lists_by_service(service_id, session: Session = Depends(get_db)):
     lists = session.query(List).filter(List.service_id == service_id).all()
     return list(
         map(
@@ -89,8 +96,9 @@ async def lists_by_service(service_id):
 
 
 @app.post("/list")
-async def create_list(list_payload: ListPayload, response: Response):
-    session = db_session()
+async def create_list(
+    list_payload: ListPayload, response: Response, session: Session = Depends(get_db)
+):
 
     try:
         list = List(
@@ -112,8 +120,7 @@ async def create_list(list_payload: ListPayload, response: Response):
 
 
 @app.delete("/list/{list_id}")
-async def delete_list(list_id, response: Response):
-    session = db_session()
+async def delete_list(list_id, response: Response, session: Session = Depends(get_db)):
     try:
         list = session.query(List).get(list_id)
     except SQLAlchemyError:
@@ -142,9 +149,10 @@ class SubscriptionEvent(BaseModel):
 
 @app.post("/subscription")
 async def create_subscription(
-    subscription_payload: SubscriptionEvent, response: Response
+    subscription_payload: SubscriptionEvent,
+    response: Response,
+    session: Session = Depends(get_db),
 ):
-    session = db_session()
     notifications_client = get_notify_client()
     try:
         list = session.query(List).get(subscription_payload.list_id)
@@ -195,8 +203,9 @@ async def create_subscription(
 
 
 @app.get("/subscription/{subscription_id}")
-async def confirm(subscription_id, response: Response):
-    session = db_session()
+async def confirm(
+    subscription_id, response: Response, session: Session = Depends(get_db)
+):
     try:
         subscription = session.query(Subscription).get(subscription_id)
     except SQLAlchemyError:
@@ -218,8 +227,9 @@ async def confirm(subscription_id, response: Response):
 
 
 @app.delete("/subscription/{unsubscription_id}")
-async def unsubscribe(unsubscription_id, response: Response):
-    session = db_session()
+async def unsubscribe(
+    unsubscription_id, response: Response, session: Session = Depends(get_db)
+):
     notifications_client = get_notify_client()
     try:
         subscription = session.query(Subscription).get(unsubscription_id)
