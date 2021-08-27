@@ -4,8 +4,6 @@ on:
   pull_request:
     paths:
       - api/**
-      - scanners/axe-core/**
-      - scanners/owasp-zap/**
 
 jobs:
   tests:

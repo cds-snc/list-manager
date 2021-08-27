@@ -20,8 +20,6 @@ jobs:
       matrix:
         include:
           - module: api
-          - module: scanners/axe-core
-          - module: scanners/owasp-zap
 
     runs-on: ubuntu-latest
     steps:
