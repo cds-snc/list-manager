@@ -27,6 +27,7 @@ def get_db():
     finally:
         db.close()
 
+
 @app.get("/version")
 async def version():
     return {"version": environ.get("GIT_SHA", "unknown")}
@@ -94,7 +95,9 @@ async def lists_by_service(service_id, session: Session = Depends(get_db)):
 
 
 @app.post("/list")
-async def create_list(list_payload: ListPayload, response: Response, session: Session = Depends(get_db)):
+async def create_list(
+    list_payload: ListPayload, response: Response, session: Session = Depends(get_db)
+):
 
     try:
         list = List(
@@ -145,7 +148,9 @@ class SubscriptionEvent(BaseModel):
 
 @app.post("/subscription")
 async def create_subscription(
-    subscription_payload: SubscriptionEvent, response: Response, session: Session = Depends(get_db)
+    subscription_payload: SubscriptionEvent,
+    response: Response,
+    session: Session = Depends(get_db),
 ):
     notifications_client = get_notify_client()
     try:
@@ -197,7 +202,9 @@ async def create_subscription(
 
 
 @app.get("/subscription/{subscription_id}")
-async def confirm(subscription_id, response: Response, session: Session = Depends(get_db)):
+async def confirm(
+    subscription_id, response: Response, session: Session = Depends(get_db)
+):
     try:
         subscription = session.query(Subscription).get(subscription_id)
     except SQLAlchemyError:
@@ -219,7 +226,9 @@ async def confirm(subscription_id, response: Response, session: Session = Depend
 
 
 @app.delete("/subscription/{unsubscription_id}")
-async def unsubscribe(unsubscription_id, response: Response, session: Session = Depends(get_db)):
+async def unsubscribe(
+    unsubscription_id, response: Response, session: Session = Depends(get_db)
+):
     notifications_client = get_notify_client()
     try:
         subscription = session.query(Subscription).get(unsubscription_id)
