@@ -22,7 +22,7 @@ resource "aws_security_group" "api" {
   name        = "${var.product_name}_api_sg"
   description = "SG for the API lambda"
 
-  vpc_id = module.var.vpc_id
+  vpc_id = module.vpc.vpc_id
 
   tags = {
     CostCentre = var.billing_code
