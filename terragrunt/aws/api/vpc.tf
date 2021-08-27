@@ -6,18 +6,8 @@ module "vpc" {
   enable_flow_log   = true
 }
 
-
-data "aws_network_acls" "vpc" {
-  vpc_id = module.vpc.vpc_id
-
-  filter {
-    name   = "network-acl-id"
-    values = [module.vpc.main_nacl_id]
-  }
-}
-
 resource "aws_network_acl_rule" "ephemeral_ports" {
-  network_acl_id = data.aws_network_acls.vpc[0]
+  network_acl_id = module.vpc.main_nacl_id
   rule_number    = 100
   egress         = true
   protocol       = "tcp"
