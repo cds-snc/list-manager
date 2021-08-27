@@ -25,7 +25,7 @@ app = FastAPI(root_path="/v1")
 @contextmanager
 def get_db(db_conn=Depends(get_engine)) -> Iterable[Session]:
     # Explicit type because sessionmaker.__call__ stub is Any
-    session: Session = sessionmaker(autocommit=False, autoflush=False, bind=db_conn)()
+    session: Session = sessionmaker(autocommit=False, autoflush=True, bind=db_conn)()
     try:
         yield session
         session.commit()
