@@ -22,6 +22,7 @@ def upgrade():
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
         sa.Column("name", sa.Unicode(255), nullable=False, unique=True),
         sa.Column("language", sa.Unicode(255), nullable=False),
+        sa.Column("active", sa.Boolean, unique=False, default=True),
         sa.Column("subscribe_email_template_id", sa.Unicode(255)),
         sa.Column("unsubscribe_email_template_id", sa.Unicode(255)),
         sa.Column("subscribe_phone_template_id", sa.Unicode(255)),

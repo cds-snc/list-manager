@@ -13,7 +13,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 
-app = FastAPI()
+app = FastAPI(root_path="/v1")
 
 
 @app.get("/version")

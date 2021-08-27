@@ -36,6 +36,7 @@ def test_list_model_saved(assert_new_model_saved, session):
     session.add(list)
     session.commit()
     assert list.name == "name"
+    assert list.active is True
     assert_new_model_saved(list)
     session.delete(list)
     session.commit()

@@ -1,7 +1,7 @@
 import datetime
 import uuid
 
-from sqlalchemy import DateTime, Column, String
+from sqlalchemy import Boolean, DateTime, Column, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship, validates
 
@@ -15,6 +15,7 @@ class List(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String, nullable=False, unique=True)
     language = Column(String, nullable=False, index=False)
+    active = Column(Boolean, unique=False, default=True)
     subscribe_email_template_id = Column(String)
     unsubscribe_email_template_id = Column(String)
     subscribe_phone_template_id = Column(String)
