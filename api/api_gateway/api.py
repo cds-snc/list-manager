@@ -141,11 +141,13 @@ class SubscriptionEvent(BaseModel):
 
 
 @app.post("/subscription")
-async def create_subscription(list_payload: SubscriptionEvent, response: Response):
+async def create_subscription(
+    subscription_payload: SubscriptionEvent, response: Response
+):
     session = db_session()
     notifications_client = get_notify_client()
     try:
-        list = session.query(List).get(list_payload.list_id)
+        list = session.query(List).get(subscription_payload.list_id)
     except SQLAlchemyError:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return {"error": "list id is not valid"}
@@ -154,28 +156,34 @@ async def create_subscription(list_payload: SubscriptionEvent, response: Respons
         response.status_code = status.HTTP_404_NOT_FOUND
         return {"error": "list not found"}
 
-    if list_payload.email is None and list_payload.phone is None:
+    if subscription_payload.email is None and subscription_payload.phone is None:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return {"error": "email and phone can not be empty"}
 
     try:
         subscription = Subscription(
-            email=list_payload.email,
-            phone=list_payload.phone,
+            email=subscription_payload.email,
+            phone=subscription_payload.phone,
             list=list,
         )
         session.add(subscription)
         session.commit()
 
-        if list_payload.email is not None:
+        if (
+            subscription_payload.email is not None
+            and list.subscribe_email_template_id is not None
+        ):
             notifications_client.send_email_notification(
-                email_address=list_payload.email,
+                email_address=subscription_payload.email,
                 template_id=list.subscribe_email_template_id,
             )
 
-        if list_payload.phone is not None:
+        if (
+            subscription_payload.phone is not None
+            and list.subscribe_phone_template_id is not None
+        ):
             notifications_client.send_sms_notification(
-                phone_number=list_payload.phone,
+                phone_number=subscription_payload.phone,
                 template_id=list.subscribe_phone_template_id,
             )
 
@@ -231,13 +239,13 @@ async def unsubscribe(unsubscription_id, response: Response):
         session.delete(subscription)
         session.commit()
 
-        if email is not None:
+        if email is not None and list.unsubscribe_email_template_id is not None:
             notifications_client.send_email_notification(
                 email_address=email,
                 template_id=list.unsubscribe_email_template_id,
             )
 
-        if phone is not None:
+        if phone is not None and list.unsubscribe_phone_template_id is not None:
             notifications_client.send_sms_notification(
                 phone_number=phone,
                 template_id=list.unsubscribe_phone_template_id,
