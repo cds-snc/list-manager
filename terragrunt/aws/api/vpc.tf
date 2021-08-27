@@ -6,15 +6,43 @@ module "vpc" {
   enable_flow_log   = true
 }
 
-data "aws_security_group" "rds_proxy_sg" {
-  id = var.rds_proxy_security_group_id
+
+data "aws_network_acls" "vpc" {
+  vpc_id = module.vpc.vpc_id
+
+  filter {
+    name   = "network-acl-id"
+    values = [module.vpc.main_nacl_id]
+  }
 }
 
-resource "aws_security_group_rule" "rds_sg_egress_443" {
-  type              = "egress"
-  from_port         = 443
-  to_port           = 443
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = data.aws_security_group.rds_proxy_sg.id
+resource "aws_network_acl_rule" "ephemeral_ports" {
+  network_acl_id = data.aws_network_acls.vpc[0]
+  rule_number    = 100
+  egress         = true
+  protocol       = "tcp"
+  rule_action    = "allow"
+  cidr_block     = "0.0.0.0/0"
+  from_port      = 1024
+  to_port        = 65535
+}
+
+resource "aws_security_group" "api" {
+
+  name        = "${var.product_name}_api_sg"
+  description = "SG for the API lambda"
+
+  vpc_id = module.var.vpc_id
+
+  tags = {
+    CostCentre = var.billing_code
+    Name       = "${var.product_name}_api_sg"
+  }
+
+  egress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "TCP"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 }
