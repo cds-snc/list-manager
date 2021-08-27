@@ -11,7 +11,7 @@ resource "aws_lambda_function" "api" {
 
   environment {
     variables = {
-      NOTIFY_KEY= var.notify_key
+      NOTIFY_KEY              = var.notify_key
       SQLALCHEMY_DATABASE_URI = module.rds.proxy_connection_string_value
     }
   }
