@@ -8,6 +8,7 @@ on:
 env:
   TERRAFORM_VERSION: 1.0.3
   TERRAGRUNT_VERSION: v0.31.1
+  TF_VAR_notify_key: ${{ secrets.TF_VARS_NOTIFY_KEY }}
   TF_VAR_rds_password: ${{ secrets.TF_VARS_RDS_PASSWORD }}
 
 jobs:
@@ -46,17 +47,5 @@ jobs:
       - name: Apply api
         if: ${{ steps.filter.outputs.api == 'true' }}
         working-directory: terragrunt/env/api
-        run: |
-          terragrunt apply --terragrunt-non-interactive -auto-approve
-
-      - name: Apply scanners/axe-core
-        if: ${{ steps.filter.outputs.scanners-axe-core == 'true' }}
-        working-directory: terragrunt/env/scanners/axe-core
-        run: |
-          terragrunt apply --terragrunt-non-interactive -auto-approve
-
-      - name: Apply scanners/owasp-zap
-        if: ${{ steps.filter.outputs.scanners-owasp-zap == 'true' }}
-        working-directory: terragrunt/env/scanners/owasp-zap
         run: |
           terragrunt apply --terragrunt-non-interactive -auto-approve
