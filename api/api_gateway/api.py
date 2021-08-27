@@ -19,6 +19,7 @@ NOTIFY_KEY = environ.get("NOTIFY_KEY")
 
 app = FastAPI(root_path="/v1")
 
+
 # Dependency
 def get_db():
     db = db_session()
