@@ -5,14 +5,13 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, sessionmaker
 from database.db import get_engine
 from logger import log
-from typing import Optional, List, Iterable
+from typing import Optional, Iterable
 
 from models.List import List
 from models.Subscription import Subscription
 
 # from crawler.crawler import crawl
 # import uuid
-from typing import Optional
 from pydantic import BaseModel
 from notifications_python_client.notifications import NotificationsAPIClient
 
@@ -30,7 +29,7 @@ def get_db(db_conn=Depends(get_engine)) -> Iterable[Session]:
     try:
         yield session
         session.commit()
-    except:
+    except:  # noqa E722
         session.rollback()
         raise
     finally:

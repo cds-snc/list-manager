@@ -1,10 +1,9 @@
 import os
 
 from fastapi.testclient import TestClient
-from unittest.mock import ANY, MagicMock, patch
+from unittest.mock import ANY, patch
 
 from api_gateway import api
-from sqlalchemy.exc import SQLAlchemyError
 import uuid
 
 from models.List import List
