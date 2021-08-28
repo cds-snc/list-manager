@@ -201,9 +201,7 @@ def create_subscription(
 
 
 @app.get("/subscription/{subscription_id}")
-def confirm(
-    subscription_id, response: Response, session: Session = Depends(get_db)
-):
+def confirm(subscription_id, response: Response, session: Session = Depends(get_db)):
     try:
         subscription = session.query(Subscription).get(subscription_id)
     except SQLAlchemyError:
