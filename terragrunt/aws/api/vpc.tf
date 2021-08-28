@@ -28,7 +28,7 @@ resource "aws_network_acl_rule" "ephemeral_ports" {
   to_port        = 65535
 }
 
-resource "aws_network_acl_rule" "https" {
+resource "aws_network_acl_rule" "https_egress" {
   network_acl_id = module.vpc.main_nacl_id
   rule_number    = 100
   egress         = true
@@ -39,7 +39,7 @@ resource "aws_network_acl_rule" "https" {
   to_port        = 443
 }
 
-resource "aws_network_acl_rule" "ephemeral_ports" {
+resource "aws_network_acl_rule" "ephemeral_ports_egress" {
   network_acl_id = module.vpc.main_nacl_id
   rule_number    = 101
   egress         = true
