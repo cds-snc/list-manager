@@ -28,6 +28,28 @@ resource "aws_network_acl_rule" "ephemeral_ports" {
   to_port        = 65535
 }
 
+resource "aws_network_acl_rule" "https" {
+  network_acl_id = module.vpc.main_nacl_id
+  rule_number    = 100
+  egress         = true
+  protocol       = "tcp"
+  rule_action    = "allow"
+  cidr_block     = "0.0.0.0/0"
+  from_port      = 443
+  to_port        = 443
+}
+
+resource "aws_network_acl_rule" "ephemeral_ports" {
+  network_acl_id = module.vpc.main_nacl_id
+  rule_number    = 101
+  egress         = true
+  protocol       = "tcp"
+  rule_action    = "allow"
+  cidr_block     = "0.0.0.0/0"
+  from_port      = 1024
+  to_port        = 65535
+}
+
 resource "aws_security_group" "api" {
 
   name        = "${var.product_name}_api_sg"
