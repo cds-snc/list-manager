@@ -1,6 +1,6 @@
 name: Source code security scan using Bandit
 on:
-  push:
+  pull_request:
     paths:
       - "**/*.py"
 
