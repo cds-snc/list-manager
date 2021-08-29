@@ -1,9 +1,10 @@
 from os import environ
 from fastapi import Depends, FastAPI, Response, status
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, NoResultFound
 from sqlalchemy.orm import Session
 from database.db import db_session
 from logger import log
+from uuid import UUID
 
 from models.List import List
 from models.Subscription import Subscription
@@ -55,10 +56,13 @@ class ListPayload(BaseModel):
     name: str
     language: str
     service_id: str
-    subscribe_email_template_id: Optional[str] = None
-    unsubscribe_email_template_id: Optional[str] = None
-    subscribe_phone_template_id: Optional[str] = None
-    unsubscribe_phone_template_id: Optional[str] = None
+    subscribe_email_template_id: Optional[UUID] = None
+    unsubscribe_email_template_id: Optional[UUID] = None
+    subscribe_phone_template_id: Optional[UUID] = None
+    unsubscribe_phone_template_id: Optional[UUID] = None
+
+    class Config:
+        extra = "forbid"
 
 
 @app.get("/lists")
@@ -103,10 +107,14 @@ def create_list(
             name=list_payload.name,
             language=list_payload.language,
             service_id=list_payload.service_id,
-            subscribe_email_template_id=list_payload.subscribe_email_template_id,
-            unsubscribe_email_template_id=list_payload.unsubscribe_email_template_id,
-            subscribe_phone_template_id=list_payload.subscribe_phone_template_id,
-            unsubscribe_phone_template_id=list_payload.unsubscribe_phone_template_id,
+            subscribe_email_template_id=str(list_payload.subscribe_email_template_id),
+            unsubscribe_email_template_id=str(
+                list_payload.unsubscribe_email_template_id
+            ),
+            subscribe_phone_template_id=str(list_payload.subscribe_phone_template_id),
+            unsubscribe_phone_template_id=str(
+                list_payload.unsubscribe_phone_template_id
+            ),
         )
         session.add(list)
         session.commit()
@@ -121,11 +129,9 @@ def create_list(
 def delete_list(list_id, response: Response, session: Session = Depends(get_db)):
     try:
         list = session.query(List).get(list_id)
+        if list is None:
+            raise NoResultFound
     except SQLAlchemyError:
-        response.status_code = status.HTTP_400_BAD_REQUEST
-        return {"error": "list id is not valid"}
-
-    if list is None:
         response.status_code = status.HTTP_404_NOT_FOUND
         return {"error": "list not found"}
 
@@ -144,6 +150,9 @@ class SubscriptionEvent(BaseModel):
     phone: Optional[str] = None
     list_id: str
 
+    class Config:
+        extra = "forbid"
+
 
 @app.post("/subscription")
 def create_subscription(
@@ -154,11 +163,9 @@ def create_subscription(
     notifications_client = get_notify_client()
     try:
         list = session.query(List).get(subscription_payload.list_id)
+        if list is None:
+            raise NoResultFound
     except SQLAlchemyError:
-        response.status_code = status.HTTP_400_BAD_REQUEST
-        return {"error": "list id is not valid"}
-
-    if list is None:
         response.status_code = status.HTTP_404_NOT_FOUND
         return {"error": "list not found"}
 
@@ -204,11 +211,10 @@ def create_subscription(
 def confirm(subscription_id, response: Response, session: Session = Depends(get_db)):
     try:
         subscription = session.query(Subscription).get(subscription_id)
-    except SQLAlchemyError:
-        response.status_code = status.HTTP_400_BAD_REQUEST
-        return {"error": "subscription id is not valid"}
+        if subscription is None:
+            raise NoResultFound
 
-    if subscription is None:
+    except SQLAlchemyError:
         response.status_code = status.HTTP_404_NOT_FOUND
         return {"error": "subscription not found"}
 
@@ -227,13 +233,12 @@ def unsubscribe(
     unsubscription_id, response: Response, session: Session = Depends(get_db)
 ):
     notifications_client = get_notify_client()
+
     try:
         subscription = session.query(Subscription).get(unsubscription_id)
+        if subscription is None:
+            raise NoResultFound
     except SQLAlchemyError:
-        response.status_code = status.HTTP_400_BAD_REQUEST
-        return {"error": "subscription id is not valid"}
-
-    if subscription is None:
         response.status_code = status.HTTP_404_NOT_FOUND
         return {"error": "subscription not found"}
 
