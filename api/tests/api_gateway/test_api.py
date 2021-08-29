@@ -258,23 +258,6 @@ def test_create_list():
     assert response.status_code == 200
 
 
-def test_create_list():
-    response = client.post(
-        "/list",
-        json={
-            "name": "new_name",
-            "language": "new_language",
-            "service_id": "new_service_id",
-            "subscribe_email_template_id": str(uuid.uuid4()),
-            "unsubscribe_email_template_id": str(uuid.uuid4()),
-            "subscribe_phone_template_id": str(uuid.uuid4()),
-            "unsubscribe_phone_template_id": str(uuid.uuid4()),
-        },
-    )
-    assert response.json() == {"id": ANY}
-    assert response.status_code == 200
-
-
 def test_create_list_with_undeclared_parameter():
     response = client.post(
         "/list",
