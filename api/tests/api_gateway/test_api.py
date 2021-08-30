@@ -73,9 +73,15 @@ def test_create_subscription_event_with_bad_email(mock_client, list_fixture):
         "/subscription",
         json={"email": "example.com", "list_id": str(list_fixture.id)},
     )
-    assert response.json() == {'detail': [{'loc': ['body', 'email'],
-                                           'msg': 'value is not a valid email address',
-                                           'type': 'value_error.email'}]}
+    assert response.json() == {
+        "detail": [
+            {
+                "loc": ["body", "email"],
+                "msg": "value is not a valid email address",
+                "type": "value_error.email",
+            }
+        ]
+    }
     assert response.status_code == 422
 
 
