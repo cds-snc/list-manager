@@ -4,14 +4,14 @@ This repository provides some base files for setting up a repository at
 CDS.
 
 
-# Development
+## Development
 Recommended: `devcontainer` extension for VSCode
 
 To bring up your local dev environment, make sure you have install the requirements & run migrations:
 ```
 make install
 make install-dev
-cd api && make migrations && cd ../
+make migrations
 ```
 
 Bring up the local dev environment:
