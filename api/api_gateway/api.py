@@ -280,7 +280,6 @@ def unsubscribe(
 
 
 def get_notify_client():
-    if NOTIFY_KEY:
-        return NotificationsAPIClient(
-            NOTIFY_KEY, base_url="https://api.notification.canada.ca"
-        )
+    return NotificationsAPIClient(
+        NOTIFY_KEY, base_url="https://api.notification.canada.ca"
+    )
