@@ -68,6 +68,24 @@ def test_create_subscription_event_empty_phone_and_email(mock_client, list_fixtu
 
 
 @patch("api_gateway.api.get_notify_client")
+def test_create_subscription_event_with_bad_email(mock_client, list_fixture):
+    response = client.post(
+        "/subscription",
+        json={"email": "example.com", "list_id": str(list_fixture.id)},
+    )
+    assert response.json() == {
+        "detail": [
+            {
+                "loc": ["body", "email"],
+                "msg": "value is not a valid email address",
+                "type": "value_error.email",
+            }
+        ]
+    }
+    assert response.status_code == 422
+
+
+@patch("api_gateway.api.get_notify_client")
 def test_create_succeeds_with_email(mock_client, list_fixture):
     response = client.post(
         "/subscription",
@@ -78,6 +96,11 @@ def test_create_succeeds_with_email(mock_client, list_fixture):
     mock_client().send_email_notification.assert_called_once_with(
         email_address="test@example.com",
         template_id="fixture_subscribe_email_template_id",
+        personalisation={
+            "email_address": "test@example.com",
+            "name": "fixture_name",
+            "subscription_id": ANY,
+        },
     )
 
 
@@ -89,7 +112,9 @@ def test_create_succeeds_with_phone(mock_client, list_fixture):
     assert response.json() == {"id": ANY}
     assert response.status_code == 200
     mock_client().send_sms_notification.assert_called_once_with(
-        phone_number="123456789", template_id="fixture_subscribe_phone_template_id"
+        phone_number="123456789",
+        template_id="fixture_subscribe_phone_template_id",
+        personalisation={"phone_number": "123456789", "name": "fixture_name"},
     )
 
 
@@ -195,10 +220,12 @@ def test_unsubscribe_event_with_correct_id(mock_client, subscription_fixture):
     mock_client().send_sms_notification.assert_called_once_with(
         phone_number="fixture_phone",
         template_id="fixture_unsubscribe_phone_template_id",
+        personalisation={"phone_number": "fixture_phone", "name": "fixture_name"},
     )
     mock_client().send_email_notification.assert_called_once_with(
         email_address="fixture_email",
         template_id="fixture_unsubscribe_email_template_id",
+        personalisation={"email_address": "fixture_email", "name": "fixture_name"},
     )
 
 

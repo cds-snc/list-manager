@@ -10,7 +10,7 @@ from models.List import List
 from models.Subscription import Subscription
 
 from typing import Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from notifications_python_client.notifications import NotificationsAPIClient
 
 
@@ -146,7 +146,7 @@ def delete_list(list_id, response: Response, session: Session = Depends(get_db))
 
 
 class SubscriptionEvent(BaseModel):
-    email: Optional[str] = None
+    email: Optional[EmailStr] = None
     phone: Optional[str] = None
     list_id: str
 
@@ -189,6 +189,11 @@ def create_subscription(
             notifications_client.send_email_notification(
                 email_address=subscription_payload.email,
                 template_id=list.subscribe_email_template_id,
+                personalisation={
+                    "email_address": subscription_payload.email,
+                    "name": list.name,
+                    "subscription_id": str(subscription.id),
+                },
             )
 
         if (
@@ -198,6 +203,10 @@ def create_subscription(
             notifications_client.send_sms_notification(
                 phone_number=subscription_payload.phone,
                 template_id=list.subscribe_phone_template_id,
+                personalisation={
+                    "phone_number": subscription_payload.phone,
+                    "name": list.name,
+                },
             )
 
         return {"id": subscription.id}
@@ -254,12 +263,14 @@ def unsubscribe(
             notifications_client.send_email_notification(
                 email_address=email,
                 template_id=list.unsubscribe_email_template_id,
+                personalisation={"email_address": email, "name": list.name},
             )
 
         if phone is not None and list.unsubscribe_phone_template_id is not None:
             notifications_client.send_sms_notification(
                 phone_number=phone,
                 template_id=list.unsubscribe_phone_template_id,
+                personalisation={"phone_number": phone, "name": list.name},
             )
 
         return {"status": "OK"}
