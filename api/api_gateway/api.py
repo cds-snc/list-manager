@@ -1,5 +1,6 @@
 from os import environ
 from fastapi import Depends, FastAPI, Response, status
+from notifications_python_client.notifications import NotificationsAPIClient
 from sqlalchemy.exc import SQLAlchemyError, NoResultFound
 from sqlalchemy.orm import Session
 from database.db import db_session
@@ -11,7 +12,7 @@ from models.Subscription import Subscription
 
 from typing import Optional
 from pydantic import BaseModel, EmailStr
-from notifications_python_client.notifications import NotificationsAPIClient
+from clients.notify import NotificationsAPIClient
 
 
 NOTIFY_KEY = environ.get("NOTIFY_KEY")
