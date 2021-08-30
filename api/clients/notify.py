@@ -4,17 +4,17 @@ from notifications_python_client.notifications import NotificationsAPIClient as 
 class NotificationsAPIClient(BaseNotify):
     def send_bulk_notifications(
         self,
+        job_name,
         subscriptions,
         template_id,
         scheduled_for=None,
         email_reply_to_id=None
     ):
         notification = {
-            "name": "Test",
+            "name": job_name,
             "template_id": template_id,
             "rows": subscriptions
         }
-
 
         if scheduled_for:
             notification.update({'scheduled_for': scheduled_for})
