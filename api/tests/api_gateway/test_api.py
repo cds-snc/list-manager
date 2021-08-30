@@ -49,8 +49,8 @@ def test_healthcheck_failure(mock_log, mock_get_db_version):
 @patch("api_gateway.api.get_notify_client")
 def test_create_subscription_event_with_bad_list_id(mock_client):
     response = client.post("/subscription", json={"list_id": ""})
-    assert response.json() == {"error": "list id is not valid"}
-    assert response.status_code == 400
+    assert response.json() == {"error": "list not found"}
+    assert response.status_code == 404
 
 
 @patch("api_gateway.api.get_notify_client")
@@ -107,6 +107,21 @@ def test_create_succeeds_with_email_and_phone(mock_client, list_fixture):
     assert response.status_code == 200
 
 
+@patch("api_gateway.api.get_notify_client")
+def test_create_subscription_with_undeclared_parameter(mock_client, list_fixture):
+    response = client.post(
+        "/subscription",
+        json={
+            "email": "test@example.com",
+            "phone": "123456789",
+            "list_id": str(list_fixture.id),
+            "foo": "bar",
+        },
+    )
+    assert response.json() == {"detail": ANY}
+    assert response.status_code == 422
+
+
 @patch("api_gateway.api.db_session")
 @patch("api_gateway.api.get_notify_client")
 def test_create_succeeds_with_email_and_phone_unknown_error(
@@ -129,8 +144,8 @@ def test_create_succeeds_with_email_and_phone_unknown_error(
 
 def test_confirm_with_bad_id():
     response = client.get("/subscription/foo")
-    assert response.json() == {"error": "subscription id is not valid"}
-    assert response.status_code == 400
+    assert response.json() == {"error": "subscription not found"}
+    assert response.status_code == 404
 
 
 def test_confirm_with_id_not_found():
@@ -160,8 +175,8 @@ def test_confirm_with_correct_id_unknown_error(mock_db_session, subscription_fix
 @patch("api_gateway.api.get_notify_client")
 def test_unsubscribe_event_with_bad_id(mock_client):
     response = client.delete("/subscription/foo")
-    assert response.json() == {"error": "subscription id is not valid"}
-    assert response.status_code == 400
+    assert response.json() == {"error": "subscription not found"}
+    assert response.status_code == 404
 
 
 @patch("api_gateway.api.get_notify_client")
@@ -233,14 +248,32 @@ def test_create_list():
             "name": "new_name",
             "language": "new_language",
             "service_id": "new_service_id",
-            "subscribe_email_template_id": "new_subscribe_email_template_id",
-            "unsubscribe_email_template_id": "new_unsubscribe_email_template_id",
-            "subscribe_phone_template_id": "new_subscribe_phone_template_id",
-            "unsubscribe_phone_template_id": "new_unsubscribe_phone_template_id",
+            "subscribe_email_template_id": str(uuid.uuid4()),
+            "unsubscribe_email_template_id": str(uuid.uuid4()),
+            "subscribe_phone_template_id": str(uuid.uuid4()),
+            "unsubscribe_phone_template_id": str(uuid.uuid4()),
         },
     )
     assert response.json() == {"id": ANY}
     assert response.status_code == 200
+
+
+def test_create_list_with_undeclared_parameter():
+    response = client.post(
+        "/list",
+        json={
+            "name": "new_name",
+            "language": "new_language",
+            "service_id": "new_service_id",
+            "subscribe_email_template_id": str(uuid.uuid4()),
+            "unsubscribe_email_template_id": str(uuid.uuid4()),
+            "subscribe_phone_template_id": str(uuid.uuid4()),
+            "unsubscribe_phone_template_id": str(uuid.uuid4()),
+            "foo": "bar",
+        },
+    )
+    assert response.json() == {"detail": ANY}
+    assert response.status_code == 422
 
 
 def test_create_list_with_error():
@@ -256,14 +289,14 @@ def test_create_list_with_error():
             "unsubscribe_phone_template_id": "new_unsubscribe_phone_template_id",
         },
     )
-    assert response.json() == {"error": ANY}
-    assert response.status_code == 500
+    assert response.json() == {"detail": ANY}
+    assert response.status_code == 422
 
 
 def test_delete_list_with_bad_id():
     response = client.delete("/list/foo")
-    assert response.json() == {"error": "list id is not valid"}
-    assert response.status_code == 400
+    assert response.json() == {"error": "list not found"}
+    assert response.status_code == 404
 
 
 def test_delete_list_with_id_not_found():
