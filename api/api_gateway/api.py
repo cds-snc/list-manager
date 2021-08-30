@@ -181,10 +181,9 @@ def create_subscription(
         )
         session.add(subscription)
         session.commit()
-
         if (
             subscription_payload.email is not None
-            and list.subscribe_email_template_id is not None
+            and len(list.subscribe_email_template_id) == 36
         ):
             notifications_client.send_email_notification(
                 email_address=subscription_payload.email,
@@ -198,7 +197,7 @@ def create_subscription(
 
         if (
             subscription_payload.phone is not None
-            and list.subscribe_phone_template_id is not None
+            and len(list.subscribe_phone_template_id) == 36
         ):
             notifications_client.send_sms_notification(
                 phone_number=subscription_payload.phone,
@@ -259,14 +258,14 @@ def unsubscribe(
         session.delete(subscription)
         session.commit()
 
-        if email is not None and list.unsubscribe_email_template_id is not None:
+        if email is not None and len(list.unsubscribe_email_template_id) == 36:
             notifications_client.send_email_notification(
                 email_address=email,
                 template_id=list.unsubscribe_email_template_id,
                 personalisation={"email_address": email, "name": list.name},
             )
 
-        if phone is not None and list.unsubscribe_phone_template_id is not None:
+        if phone is not None and len(list.unsubscribe_phone_template_id) == 36:
             notifications_client.send_sms_notification(
                 phone_number=phone,
                 template_id=list.unsubscribe_phone_template_id,

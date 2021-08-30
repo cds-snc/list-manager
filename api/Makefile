@@ -1,4 +1,4 @@
-.PHONY: dev fmt install lint migrations test fmt-ci lint-ci build install-dev
+.PHONY: dev fmt install lint migrations test fmt-ci lint-ci build install-dev load-test
 
 build: ;
 
@@ -13,6 +13,9 @@ install:
 
 install-dev:
 	pip3 install --user -r requirements_dev.txt
+
+load-test:
+	locust
 
 lint:
 	flake8 .
