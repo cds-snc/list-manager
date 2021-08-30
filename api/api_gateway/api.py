@@ -192,6 +192,7 @@ def create_subscription(
                 personalisation={
                     "email_address": subscription_payload.email,
                     "name": list.name,
+                    "subscription_id": str(subscription.id)
                 },
             )
 

@@ -78,7 +78,7 @@ def test_create_succeeds_with_email(mock_client, list_fixture):
     mock_client().send_email_notification.assert_called_once_with(
         email_address="test@example.com",
         template_id="fixture_subscribe_email_template_id",
-        personalisation={"email_address": "test@example.com", "name": "fixture_name"},
+        personalisation={"email_address": "test@example.com", "name": "fixture_name", "subscription_id": ANY},
     )
 
 
