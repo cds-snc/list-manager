@@ -189,6 +189,10 @@ def create_subscription(
             notifications_client.send_email_notification(
                 email_address=subscription_payload.email,
                 template_id=list.subscribe_email_template_id,
+                personalisation={
+                    "email_address": subscription_payload.email,
+                    "name": list.name,
+                },
             )
 
         if (
@@ -198,6 +202,10 @@ def create_subscription(
             notifications_client.send_sms_notification(
                 phone_number=subscription_payload.phone,
                 template_id=list.subscribe_phone_template_id,
+                personalisation={
+                    "phone_number": subscription_payload.phone,
+                    "name": list.name,
+                },
             )
 
         return {"id": subscription.id}
@@ -254,12 +262,14 @@ def unsubscribe(
             notifications_client.send_email_notification(
                 email_address=email,
                 template_id=list.unsubscribe_email_template_id,
+                personalisation={"email_address": email, "name": list.name},
             )
 
         if phone is not None and list.unsubscribe_phone_template_id is not None:
             notifications_client.send_sms_notification(
                 phone_number=phone,
                 template_id=list.unsubscribe_phone_template_id,
+                personalisation={"phone_number": phone, "name": list.name},
             )
 
         return {"status": "OK"}
