@@ -10,7 +10,7 @@ from models.List import List
 from models.Subscription import Subscription
 
 from typing import Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from notifications_python_client.notifications import NotificationsAPIClient
 
 
@@ -146,7 +146,7 @@ def delete_list(list_id, response: Response, session: Session = Depends(get_db))
 
 
 class SubscriptionEvent(BaseModel):
-    email: Optional[str] = None
+    email: Optional[EmailStr] = None
     phone: Optional[str] = None
     list_id: str
 

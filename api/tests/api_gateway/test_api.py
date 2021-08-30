@@ -68,6 +68,18 @@ def test_create_subscription_event_empty_phone_and_email(mock_client, list_fixtu
 
 
 @patch("api_gateway.api.get_notify_client")
+def test_create_subscription_event_with_bad_email(mock_client, list_fixture):
+    response = client.post(
+        "/subscription",
+        json={"email": "example.com", "list_id": str(list_fixture.id)},
+    )
+    assert response.json() == {'detail': [{'loc': ['body', 'email'],
+                                           'msg': 'value is not a valid email address',
+                                           'type': 'value_error.email'}]}
+    assert response.status_code == 422
+
+
+@patch("api_gateway.api.get_notify_client")
 def test_create_succeeds_with_email(mock_client, list_fixture):
     response = client.post(
         "/subscription",
