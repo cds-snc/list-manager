@@ -6,7 +6,7 @@ from database.db import db_session
 from logger import log
 from uuid import UUID
 
-from aws_lambda_powertools import Metrics, single_metric
+from aws_lambda_powertools import Metrics
 from aws_lambda_powertools.metrics import MetricUnit
 
 from models.List import List
@@ -124,7 +124,7 @@ def create_list(
         )
         session.add(list)
         session.commit()
-        
+
         metrics.add_metric(name="ListCreated", unit=MetricUnit.Count, value=1)
         metrics.add_metadata(key="list_id", value=str(list.id))
 
@@ -207,7 +207,9 @@ def create_subscription(
                     "subscription_id": str(subscription.id),
                 },
             )
-            metrics.add_metric(name="SuccessfulSubscription", unit=MetricUnit.Count, value=1)
+            metrics.add_metric(
+                name="SuccessfulSubscription", unit=MetricUnit.Count, value=1
+            )
             metrics.add_metadata(key="list_id", value=str(subscription_payload.list_id))
             metrics.add_metadata(key="language", value=list.language)
             metrics.add_metadata(key="target", value=METRICS_EMAIL_TARGET)
@@ -224,7 +226,9 @@ def create_subscription(
                     "name": list.name,
                 },
             )
-            metrics.add_metric(name="SuccessfulSubscription", unit=MetricUnit.Count, value=1)
+            metrics.add_metric(
+                name="SuccessfulSubscription", unit=MetricUnit.Count, value=1
+            )
             metrics.add_metadata(key="list_id", value=str(list.id))
             metrics.add_metadata(key="language", value=list.language)
             metrics.add_metadata(key="target", value=METRICS_SMS_TARGET)
@@ -233,7 +237,9 @@ def create_subscription(
     except SQLAlchemyError as err:
         log.error(err)
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        metrics.add_metric(name="UnsuccessfulSubscription", unit=MetricUnit.Count, value=1)
+        metrics.add_metric(
+            name="UnsuccessfulSubscription", unit=MetricUnit.Count, value=1
+        )
         metrics.add_metadata(key="list_id", value=str(subscription_payload.list_id))
 
         return {"error": "error saving subscription"}
@@ -254,7 +260,9 @@ def confirm(subscription_id, response: Response, session: Session = Depends(get_
         subscription.confirmed = True
         session.commit()
 
-        metrics.add_metric(name="SuccessfulConfirmation", unit=MetricUnit.Count, value=1)
+        metrics.add_metric(
+            name="SuccessfulConfirmation", unit=MetricUnit.Count, value=1
+        )
         metrics.add_metadata(key="subscription_id", value=str(subscription_id))
 
         return {"status": "OK"}
@@ -300,7 +308,9 @@ def unsubscribe(
                 personalisation={"phone_number": phone, "name": list.name},
             )
 
-        metrics.add_metric(name="SuccessfulUnsubscription", unit=MetricUnit.Count, value=1)
+        metrics.add_metric(
+            name="SuccessfulUnsubscription", unit=MetricUnit.Count, value=1
+        )
         metrics.add_metadata(key="unsubscription_id", value=str(unsubscription_id))
 
         return {"status": "OK"}

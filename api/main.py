@@ -13,6 +13,7 @@ def print_env_variables():
     rapi = os.getenv("AWS_LAMBDA_RUNTIME_API", "NOT_FOUND")
     log.info(f"AWS_LAMBDA_RUNTIME_API: {rapi}")
 
+
 @metrics.log_metrics(capture_cold_start_metric=True)
 def handler(event, context):
     print_env_variables()
