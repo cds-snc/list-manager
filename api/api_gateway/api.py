@@ -286,7 +286,7 @@ class SendPayload(BaseModel):
     template_type: str
     job_name: Optional[str] = "Bulk email"
 
-    @validator('template_type')
+    @validator("template_type")
     def template_type_email_or_phone(cls, v):
         if v.lower() not in ["email", "phone"]:
             raise ValueError("must be either email or phone")
@@ -297,11 +297,13 @@ class SendPayload(BaseModel):
 
 
 @app.post("/send")
-def send(send_payload: SendPayload, response: Response,
-         session: Session = Depends(get_db)):
+def send(
+    send_payload: SendPayload, response: Response, session: Session = Depends(get_db)
+):
     try:
         q = session.query(Subscription.email, Subscription.phone).filter(
-            Subscription.list_id == send_payload.list_id)
+            Subscription.list_id == send_payload.list_id
+        )
         subscription_count = q.count()
 
         if subscription_count == 0:
@@ -321,10 +323,10 @@ def send(send_payload: SendPayload, response: Response,
             subscription_rows = []
             # Headers
             template_type = send_payload.template_type.lower()
-            if template_type == 'email':
-                subscription_rows.append(['email address'])
-            elif template_type == 'phone':
-                subscription_rows.append(['phone number'])
+            if template_type == "email":
+                subscription_rows.append(["email address"])
+            elif template_type == "phone":
+                subscription_rows.append(["phone number"])
             notify_bulk_subscribers.append(subscription_rows)
 
         subscription_rows.append([row[template_type]])
@@ -333,9 +335,7 @@ def send(send_payload: SendPayload, response: Response,
 
     for subscribers in notify_bulk_subscribers:
         notifications_client.send_bulk_notifications(
-            template_type,
-            subscribers,
-            str(send_payload.template_id)
+            template_type, subscribers, str(send_payload.template_id)
         )
 
     return {"status": "OK"}

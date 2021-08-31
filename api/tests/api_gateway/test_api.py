@@ -360,7 +360,21 @@ def test_delete_list_with_correct_id_unknown_error(mock_db_session, list_fixture
 
 
 @patch("api_gateway.api.get_notify_client")
-def test_send(mock_client):
+def test_send(mock_client, list_fixture):
+    response = client.post(
+        "/send",
+        json={
+            "list_id": str(list_fixture.id),
+            "template_id": str(uuid.uuid4()),
+            "template_type": "email",
+        },
+    )
+    assert response.json() == {"status": "OK"}
+    assert response.status_code == 200
+
+
+@patch("api_gateway.api.get_notify_client")
+def test_send_invalid_list(mock_client):
     response = client.post(
         "/send",
         json={
@@ -369,5 +383,5 @@ def test_send(mock_client):
             "template_type": "email",
         },
     )
-    assert response.json() == {"status": "OK"}
-    assert response.status_code == 200
+    assert response.json() == {"error": "list not found"}
+    assert response.status_code == 404
