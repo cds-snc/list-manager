@@ -12,7 +12,6 @@ from models.Subscription import Subscription
 
 from typing import Optional
 from pydantic import BaseModel, EmailStr
-from clients.notify import NotificationsAPIClient
 
 
 NOTIFY_KEY = environ.get("NOTIFY_KEY")
@@ -286,6 +285,9 @@ class SendPayload(BaseModel):
     template_id: UUID
     template_type: str
     job_name: Optional[str] = "Bulk email"
+
+    class Config:
+        extra = "forbid"
 
 
 @app.post("/send")
