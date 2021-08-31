@@ -23,6 +23,10 @@ def test_handler_migrate_event(mock_migrate_head):
     mock_migrate_head.assert_called_once()
 
 
+def test_handler_heartbeat_event():
+    assert main.handler({"task": "heartbeat"}, {}) == "Success"
+
+
 @patch("main.migrate_head")
 def test_handler_migrate_event_failed(mock_migrate_head):
     mock_migrate_head.side_effect = Exception()
