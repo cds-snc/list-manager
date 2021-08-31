@@ -318,16 +318,18 @@ def send(
     notify_bulk_subscribers = []
     subscription_rows = []
 
+    template_type = send_payload.template_type.lower()
     for i, row in enumerate(rs):
         if (i % RECIPIENT_LIMIT == 0) or (i == subscription_count - 1):
             subscription_rows = []
             # Headers
-            template_type = send_payload.template_type.lower()
             if template_type == "email":
                 subscription_rows.append(["email address", "subscription_id"])
             elif template_type == "phone":
                 subscription_rows.append(["phone number", "subscription_id"])
-            notify_bulk_subscribers.append(subscription_rows)
+
+            if i > 0:
+                notify_bulk_subscribers.append(subscription_rows)
 
         subscription_rows.append([row[template_type], str(row.id)])
 

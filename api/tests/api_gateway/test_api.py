@@ -390,7 +390,7 @@ def test_send_email(mock_client, list_fixture):
 
     subscriptions = [["email address", "subscription_id"], ANY]
 
-    mock_client().send_bulk_notifications.assert_called_with(
+    mock_client().send_bulk_notifications.assert_called_once_with(
         "Job Name", subscriptions, template_id
     )
 
@@ -412,6 +412,6 @@ def test_send_phone(mock_client, list_fixture):
 
     subscriptions = [["phone number", "subscription_id"], ANY]
 
-    mock_client().send_bulk_notifications.assert_called_with(
+    mock_client().send_bulk_notifications.assert_called_once_with(
         "Job Name", subscriptions, template_id
     )
