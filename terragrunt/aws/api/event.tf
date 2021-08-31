@@ -8,7 +8,7 @@ resource "aws_cloudwatch_event_target" "tigger-lambda-every-three-minutes" {
   rule      = aws_cloudwatch_event_rule.every-three-minutes.name
   target_id = "${var.product_name}-${var.env}-lambda-warmer"
   arn       = aws_lambda_function.api.arn
-  input     = "{'task': 'heartbeat'}"
+  input     = jsonencode({ task = "heartbeat" })
 }
 
 resource "aws_lambda_permission" "allow-cloudwatch-to-call-lambda" {
