@@ -301,7 +301,7 @@ def send(
     send_payload: SendPayload, response: Response, session: Session = Depends(get_db)
 ):
     try:
-        q = session.query(Subscription.email, Subscription.phone).filter(
+        q = session.query(Subscription.email, Subscription.phone, Subscription.id).filter(
             Subscription.list_id == send_payload.list_id
         )
         subscription_count = q.count()
@@ -324,12 +324,12 @@ def send(
             # Headers
             template_type = send_payload.template_type.lower()
             if template_type == "email":
-                subscription_rows.append(["email address"])
+                subscription_rows.append(["email address", "subscription_id"])
             elif template_type == "phone":
-                subscription_rows.append(["phone number"])
+                subscription_rows.append(["phone number", "subscription_id"])
             notify_bulk_subscribers.append(subscription_rows)
 
-        subscription_rows.append([row[template_type]])
+        subscription_rows.append([row[template_type], str(row.id)])
 
     notifications_client = get_notify_client()
 
