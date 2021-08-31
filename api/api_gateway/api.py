@@ -1,6 +1,6 @@
 from os import environ
 from fastapi import Depends, FastAPI, Response, status
-from notifications_python_client.notifications import NotificationsAPIClient
+from clients.notify import NotificationsAPIClient
 from sqlalchemy.exc import SQLAlchemyError, NoResultFound
 from sqlalchemy.orm import Session
 from database.db import db_session
@@ -279,6 +279,48 @@ def unsubscribe(
         log.error(err)
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {"error": "error deleting subscription"}
+
+
+class SendPayload(BaseModel):
+    list_id: UUID
+    template_id: UUID
+    template_type: str
+    job_name: Optional[str] = "Bulk email"
+
+
+@app.post("/send")
+def send(send_payload: SendPayload, response: Response,
+         session: Session = Depends(get_db)):
+    # Validate list ID
+    # (Pydantic validates for us ^^^)
+
+    template_type = send_payload.template_type.lower()
+
+    s = session.query(Subscription.email, Subscription.phone).filter(
+        Subscription.list_id == send_payload.list_id)
+    rs = s.all()
+
+    subsription_rows = []
+
+    # Headers
+    if template_type == 'email':
+        subsription_rows.append(['email address'])
+    elif template_type == 'phone':
+        subsription_rows.append(['phone number'])
+
+    for row in rs:
+        subsription_rows.append([row[template_type]])
+        print('row email', subsription_rows)
+
+    if len(subsription_rows) > 0:
+        notifications_client = get_notify_client()
+        notifications_client.send_bulk_notifications(
+            template_type,
+            subsription_rows,
+            str(send_payload.template_id)
+        )
+
+    return {"status": "OK"}
 
 
 def get_notify_client():
