@@ -301,9 +301,9 @@ def send(
     send_payload: SendPayload, response: Response, session: Session = Depends(get_db)
 ):
     try:
-        q = session.query(Subscription.email, Subscription.phone, Subscription.id).filter(
-            Subscription.list_id == send_payload.list_id
-        )
+        q = session.query(
+            Subscription.email, Subscription.phone, Subscription.id
+        ).filter(Subscription.list_id == send_payload.list_id)
         subscription_count = q.count()
 
         if subscription_count == 0:
@@ -335,7 +335,7 @@ def send(
 
     for subscribers in notify_bulk_subscribers:
         notifications_client.send_bulk_notifications(
-            template_type, subscribers, str(send_payload.template_id)
+            send_payload.job_name, subscribers, str(send_payload.template_id)
         )
 
     return {"status": "OK"}

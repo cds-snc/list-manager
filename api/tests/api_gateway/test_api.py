@@ -360,20 +360,6 @@ def test_delete_list_with_correct_id_unknown_error(mock_db_session, list_fixture
 
 
 @patch("api_gateway.api.get_notify_client")
-def test_send(mock_client, list_fixture):
-    response = client.post(
-        "/send",
-        json={
-            "list_id": str(list_fixture.id),
-            "template_id": str(uuid.uuid4()),
-            "template_type": "email",
-        },
-    )
-    assert response.json() == {"status": "OK"}
-    assert response.status_code == 200
-
-
-@patch("api_gateway.api.get_notify_client")
 def test_send_invalid_list(mock_client):
     response = client.post(
         "/send",
@@ -385,3 +371,47 @@ def test_send_invalid_list(mock_client):
     )
     assert response.json() == {"error": "list not found"}
     assert response.status_code == 404
+
+
+@patch("api_gateway.api.get_notify_client")
+def test_send_email(mock_client, list_fixture):
+    template_id = str(uuid.uuid4())
+    response = client.post(
+        "/send",
+        json={
+            "list_id": str(list_fixture.id),
+            "template_id": template_id,
+            "template_type": "email",
+            "job_name": "Job Name",
+        },
+    )
+    assert response.json() == {"status": "OK"}
+    assert response.status_code == 200
+
+    subscriptions = [["email address", "subscription_id"], ANY]
+
+    mock_client().send_bulk_notifications.assert_called_with(
+        "Job Name", subscriptions, template_id
+    )
+
+
+@patch("api_gateway.api.get_notify_client")
+def test_send_phone(mock_client, list_fixture):
+    template_id = str(uuid.uuid4())
+    response = client.post(
+        "/send",
+        json={
+            "list_id": str(list_fixture.id),
+            "template_id": template_id,
+            "template_type": "phone",
+            "job_name": "Job Name",
+        },
+    )
+    assert response.json() == {"status": "OK"}
+    assert response.status_code == 200
+
+    subscriptions = [["phone number", "subscription_id"], ANY]
+
+    mock_client().send_bulk_notifications.assert_called_with(
+        "Job Name", subscriptions, template_id
+    )
