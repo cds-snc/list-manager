@@ -1,11 +1,13 @@
 import os
+import json
+import main
+import uuid
 
 from fastapi.testclient import TestClient
 from unittest.mock import ANY, MagicMock, patch
 
 from api_gateway import api
 from sqlalchemy.exc import SQLAlchemyError
-import uuid
 
 from models.List import List
 
@@ -357,3 +359,35 @@ def test_delete_list_with_correct_id_unknown_error(mock_db_session, list_fixture
     response = client.delete(f"/list/{str(list_fixture.id)}")
     assert response.json() == {"error": "error deleting list"}
     assert response.status_code == 500
+
+
+@patch("main.Mangum")
+def test_metrics(mock_mangum, context_fixture, capsys):
+
+    mock_asgi_handler = MagicMock()
+    mock_asgi_handler.return_value = True
+    mock_mangum.return_value = mock_asgi_handler
+    main.handler({"httpMethod": "GET"}, context_fixture)
+
+    log = capsys.readouterr().out.strip()
+
+    metrics_output = json.loads(log)
+
+    assert "ListCreated" in str(
+        metrics_output["_aws"]["CloudWatchMetrics"][0]["Metrics"]
+    )
+    assert "ListDeleted" in str(
+        metrics_output["_aws"]["CloudWatchMetrics"][0]["Metrics"]
+    )
+    assert "SuccessfulSubscription" in str(
+        metrics_output["_aws"]["CloudWatchMetrics"][0]["Metrics"]
+    )
+    assert "UnsuccessfulSubscription" in str(
+        metrics_output["_aws"]["CloudWatchMetrics"][0]["Metrics"]
+    )
+    assert "SuccessfulConfirmation" in str(
+        metrics_output["_aws"]["CloudWatchMetrics"][0]["Metrics"]
+    )
+    assert "SuccessfulUnsubscription" in str(
+        metrics_output["_aws"]["CloudWatchMetrics"][0]["Metrics"]
+    )
