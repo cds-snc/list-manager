@@ -1,9 +1,9 @@
 import os
 import pytest
+from unittest.mock import MagicMock, patch
 
 from alembic.config import Config
 from alembic import command
-
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -20,6 +20,13 @@ def assert_new_model_saved():
         assert model.updated_at is None
 
     return f
+
+
+@pytest.fixture
+def context_fixture():
+    context = MagicMock()
+    context.function_name = "api"
+    return context
 
 
 @pytest.fixture(scope="session")
