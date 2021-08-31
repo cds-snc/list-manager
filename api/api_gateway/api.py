@@ -286,6 +286,12 @@ class SendPayload(BaseModel):
     template_type: str
     job_name: Optional[str] = "Bulk email"
 
+    @validator('template_type')
+    def template_type_email_or_phone(cls, v):
+        if v.lower() not in ["email", "phone"]:
+            raise ValueError("must be either email or phone")
+        return v
+
     class Config:
         extra = "forbid"
 
@@ -293,9 +299,6 @@ class SendPayload(BaseModel):
 @app.post("/send")
 def send(send_payload: SendPayload, response: Response,
          session: Session = Depends(get_db)):
-    # Validate list ID
-    # (Pydantic validates for us ^^^)
-
     template_type = send_payload.template_type.lower()
 
     s = session.query(Subscription.email, Subscription.phone).filter(
