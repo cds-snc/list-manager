@@ -29,6 +29,9 @@ def handler(event, context):
             log.error(err)
             return "Error"
 
+    elif event.get("task", "") == "heartbeat":
+        return "Success"
+
     else:
         log.warning("Handler received unrecognised event")
 
