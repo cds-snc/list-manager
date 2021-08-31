@@ -11,7 +11,7 @@ from models.List import List
 from models.Subscription import Subscription
 
 from typing import Optional
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, validator
 
 
 NOTIFY_KEY = environ.get("NOTIFY_KEY")
@@ -299,29 +299,42 @@ class SendPayload(BaseModel):
 @app.post("/send")
 def send(send_payload: SendPayload, response: Response,
          session: Session = Depends(get_db)):
-    template_type = send_payload.template_type.lower()
+    try:
+        q = session.query(Subscription.email, Subscription.phone).filter(
+            Subscription.list_id == send_payload.list_id)
+        subscription_count = q.count()
 
-    s = session.query(Subscription.email, Subscription.phone).filter(
-        Subscription.list_id == send_payload.list_id)
-    rs = s.all()
+        if subscription_count == 0:
+            raise NoResultFound
 
-    subsription_rows = []
+        rs = q.all()
+    except SQLAlchemyError:
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return {"error": "list not found"}
 
-    # Headers
-    if template_type == 'email':
-        subsription_rows.append(['email address'])
-    elif template_type == 'phone':
-        subsription_rows.append(['phone number'])
+    RECIPIENT_LIMIT = 50000
+    notify_bulk_subscribers = []
+    subscription_rows = []
 
-    for row in rs:
-        subsription_rows.append([row[template_type]])
-        print('row email', subsription_rows)
+    for i, row in enumerate(rs):
+        if (i % RECIPIENT_LIMIT == 0) or (i == subscription_count - 1):
+            subscription_rows = []
+            # Headers
+            template_type = send_payload.template_type.lower()
+            if template_type == 'email':
+                subscription_rows.append(['email address'])
+            elif template_type == 'phone':
+                subscription_rows.append(['phone number'])
+            notify_bulk_subscribers.append(subscription_rows)
 
-    if len(subsription_rows) > 0:
-        notifications_client = get_notify_client()
+        subscription_rows.append([row[template_type]])
+
+    notifications_client = get_notify_client()
+
+    for subscribers in notify_bulk_subscribers:
         notifications_client.send_bulk_notifications(
             template_type,
-            subsription_rows,
+            subscribers,
             str(send_payload.template_id)
         )
 
