@@ -1,15 +1,18 @@
 import os
+import json
+import main
 import pytest
+import uuid
 
 from fastapi.testclient import TestClient
 from unittest.mock import ANY, MagicMock, patch
 
 from api_gateway import api
 from sqlalchemy.exc import SQLAlchemyError
-import uuid
 
 from models.List import List
 
+from api_gateway.api import send_bulk_notify, SendPayload
 
 client = TestClient(api.app)
 
@@ -471,3 +474,143 @@ def test_delete_list_with_correct_id_unknown_error(mock_db_session, list_fixture
     response = client.delete(f"/list/{str(list_fixture.id)}")
     assert response.json() == {"error": "error deleting list"}
     assert response.status_code == 500
+
+
+@patch("api_gateway.api.get_notify_client")
+def test_send_invalid_list(mock_client):
+    response = client.post(
+        "/send",
+        json={
+            "list_id": str(uuid.uuid4()),
+            "template_id": str(uuid.uuid4()),
+            "template_type": "email",
+        },
+    )
+    assert response.json() == {"error": "list not found"}
+    assert response.status_code == 404
+
+
+@patch("api_gateway.api.get_notify_client")
+def test_send_email(mock_client, list_fixture):
+    template_id = str(uuid.uuid4())
+    response = client.post(
+        "/send",
+        json={
+            "list_id": str(list_fixture.id),
+            "template_id": template_id,
+            "template_type": "email",
+            "job_name": "Job Name",
+        },
+    )
+    assert response.json()["status"] == "OK"
+    assert response.status_code == 200
+
+    mock_client().send_bulk_notifications.assert_called_once()
+
+
+@patch("api_gateway.api.get_notify_client")
+def test_send_more_than_limit(mock_client):
+    limit = 50000
+    items = 50001
+    calls_to_make = -(-items // limit)  # Ceil of items / limit
+
+    emails = [{"email": "t@s.t", "id": x} for x in range(items)]
+
+    send_payload = SendPayload(
+        list_id=str(uuid.uuid4()),
+        template_type="email",
+        template_id=str(uuid.uuid4()),
+        job_name="Job Name",
+    )
+
+    calls = [ANY for x in range(calls_to_make)]
+
+    emails_sent = send_bulk_notify(len(emails), send_payload, emails, limit)
+    mock_client().send_bulk_notifications.assert_has_calls(calls)
+    assert emails_sent == items
+
+
+@patch("api_gateway.api.get_notify_client")
+def test_send_emails_only(mock_client):
+    subscribers = [
+        {"email": "one@two.com", "phone": None, "id": "1"},
+        {"email": None, "phone": "1234567890", "id": "1"},
+        {"email": "one@three.com", "phone": None, "id": "1"},
+    ]
+
+    template_id = str(uuid.uuid4())
+    send_payload = SendPayload(
+        list_id=str(uuid.uuid4()),
+        template_type="email",
+        template_id=template_id,
+        job_name="Job Name",
+    )
+
+    subscriber_arr = [["email address", "subscription id"]] + [
+        [x["email"], x["id"]] for x in subscribers if x["email"]
+    ]
+
+    emails_sent = send_bulk_notify(len(subscribers), send_payload, subscribers)
+    mock_client().send_bulk_notifications.assert_called_once_with(
+        "Job Name", subscriber_arr, template_id
+    )
+    assert emails_sent == 2
+
+
+@patch("api_gateway.api.get_notify_client")
+def test_send_sms_only(mock_client):
+    subscribers = [
+        {"email": "one@two.com", "phone": None, "id": "1"},
+        {"email": None, "phone": "1234567890", "id": "1"},
+        {"email": "one@three.com", "phone": None, "id": "1"},
+    ]
+
+    template_id = str(uuid.uuid4())
+    send_payload = SendPayload(
+        list_id=str(uuid.uuid4()),
+        template_type="phone",
+        template_id=template_id,
+        job_name="Job Name",
+    )
+
+    subscriber_arr = [["phone number", "subscription id"]] + [
+        [x["phone"], x["id"]] for x in subscribers if x["phone"]
+    ]
+
+    emails_sent = send_bulk_notify(len(subscribers), send_payload, subscribers)
+    mock_client().send_bulk_notifications.assert_called_once_with(
+        "Job Name", subscriber_arr, template_id
+    )
+    assert emails_sent == 1
+
+
+@patch("main.Mangum")
+def test_metrics(mock_mangum, context_fixture, capsys):
+
+    mock_asgi_handler = MagicMock()
+    mock_asgi_handler.return_value = True
+    mock_mangum.return_value = mock_asgi_handler
+    main.handler({"httpMethod": "GET"}, context_fixture)
+
+    log = capsys.readouterr().out.strip()
+
+    metrics_output = json.loads(log)
+
+    assert "ListCreated" in str(
+        metrics_output["_aws"]["CloudWatchMetrics"][0]["Metrics"]
+    )
+    assert "ListDeleted" in str(
+        metrics_output["_aws"]["CloudWatchMetrics"][0]["Metrics"]
+    )
+    assert "SuccessfulSubscription" in str(
+        metrics_output["_aws"]["CloudWatchMetrics"][0]["Metrics"]
+    )
+    assert "UnsuccessfulSubscription" in str(
+        metrics_output["_aws"]["CloudWatchMetrics"][0]["Metrics"]
+    )
+    assert "SuccessfulConfirmation" in str(
+        metrics_output["_aws"]["CloudWatchMetrics"][0]["Metrics"]
+    )
+    assert "SuccessfulUnsubscription" in str(
+        metrics_output["_aws"]["CloudWatchMetrics"][0]["Metrics"]
+    )

@@ -1,23 +1,29 @@
 from os import environ
 from fastapi import Depends, FastAPI, Response, status
 from fastapi.responses import RedirectResponse
+from clients.notify import NotificationsAPIClient
 from sqlalchemy.exc import SQLAlchemyError, NoResultFound
 from sqlalchemy.orm import Session
 from database.db import db_session
 from logger import log
 from uuid import UUID
 
+from aws_lambda_powertools import Metrics
+from aws_lambda_powertools.metrics import MetricUnit
+
 from models.List import List
 from models.Subscription import Subscription
 
 from typing import Optional
 from pydantic import BaseModel, EmailStr, HttpUrl, validator
-from notifications_python_client.notifications import NotificationsAPIClient
 
+METRICS_EMAIL_TARGET = "email"
+METRICS_SMS_TARGET = "sms"
 NOTIFY_KEY = environ.get("NOTIFY_KEY")
 REDIRECT_ALLOW_LIST = ["valid.canada.ca", "valid.gc.ca"]
 
 app = FastAPI(root_path="/v1")
+metrics = Metrics(namespace="ListManager", service="api")
 
 
 # Dependency
@@ -35,7 +41,6 @@ def version():
 
 
 def get_db_version(session):
-
     query = "SELECT version_num FROM alembic_version"
     full_name = session.execute(query).fetchone()[0]
     return full_name
@@ -130,6 +135,10 @@ def create_list(
         )
         session.add(list)
         session.commit()
+
+        metrics.add_metric(name="ListCreated", unit=MetricUnit.Count, value=1)
+        metrics.add_metadata(key="list_id", value=str(list.id))
+
         return {"id": list.id}
     except SQLAlchemyError as err:
         log.error(err)
@@ -150,6 +159,9 @@ def delete_list(list_id, response: Response, session: Session = Depends(get_db))
     try:
         session.delete(list)
         session.commit()
+        metrics.add_metric(name="ListDeleted", unit=MetricUnit.Count, value=1)
+        metrics.add_metadata(key="list_id", value=str(list_id))
+
         return {"status": "OK"}
     except SQLAlchemyError as err:
         log.error(err)
@@ -206,6 +218,12 @@ def create_subscription(
                     "subscription_id": str(subscription.id),
                 },
             )
+            metrics.add_metric(
+                name="SuccessfulSubscription", unit=MetricUnit.Count, value=1
+            )
+            metrics.add_metadata(key="list_id", value=str(subscription_payload.list_id))
+            metrics.add_metadata(key="language", value=list.language)
+            metrics.add_metadata(key="target", value=METRICS_EMAIL_TARGET)
 
         if (
             subscription_payload.phone is not None
@@ -219,6 +237,12 @@ def create_subscription(
                     "name": list.name,
                 },
             )
+            metrics.add_metric(
+                name="SuccessfulSubscription", unit=MetricUnit.Count, value=1
+            )
+            metrics.add_metadata(key="list_id", value=str(list.id))
+            metrics.add_metadata(key="language", value=list.language)
+            metrics.add_metadata(key="target", value=METRICS_SMS_TARGET)
 
         if list.subscribe_redirect_url is not None:
             return RedirectResponse(list.subscribe_redirect_url)
@@ -227,6 +251,11 @@ def create_subscription(
     except SQLAlchemyError as err:
         log.error(err)
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        metrics.add_metric(
+            name="UnsuccessfulSubscription", unit=MetricUnit.Count, value=1
+        )
+        metrics.add_metadata(key="list_id", value=str(subscription_payload.list_id))
+
         return {"error": "error saving subscription"}
 
 
@@ -245,11 +274,17 @@ def confirm(subscription_id, response: Response, session: Session = Depends(get_
         subscription.confirmed = True
         session.commit()
 
+        metrics.add_metric(
+            name="SuccessfulConfirmation", unit=MetricUnit.Count, value=1
+        )
+        metrics.add_metadata(key="subscription_id", value=str(subscription_id))
+
         list = session.query(List).get(subscription.list_id)
         if list.confirm_redirect_url is not None:
             return RedirectResponse(list.confirm_redirect_url)
         else:
             return {"status": "OK"}
+
     except SQLAlchemyError as err:
         log.error(err)
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -292,6 +327,11 @@ def unsubscribe(
                 personalisation={"phone_number": phone, "name": list.name},
             )
 
+        metrics.add_metric(
+            name="SuccessfulUnsubscription", unit=MetricUnit.Count, value=1
+        )
+        metrics.add_metadata(key="unsubscription_id", value=str(unsubscription_id))
+
         if list.unsubscribe_redirect_url is not None:
             return RedirectResponse(list.unsubscribe_redirect_url)
         else:
@@ -300,6 +340,81 @@ def unsubscribe(
         log.error(err)
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {"error": "error deleting subscription"}
+
+
+class SendPayload(BaseModel):
+    list_id: UUID
+    template_id: UUID
+    template_type: str
+    job_name: Optional[str] = "Bulk email"
+
+    @validator("template_type")
+    def template_type_email_or_phone(cls, v):
+        if v.lower() not in ["email", "phone"]:
+            raise ValueError("must be either email or phone")
+        return v
+
+    class Config:
+        extra = "forbid"
+
+
+@app.post("/send")
+def send(
+    send_payload: SendPayload, response: Response, session: Session = Depends(get_db)
+):
+    try:
+        q = session.query(
+            Subscription.email, Subscription.phone, Subscription.id
+        ).filter(Subscription.list_id == send_payload.list_id)
+        subscription_count = q.count()
+
+        if subscription_count == 0:
+            raise NoResultFound
+
+        rs = q.all()
+    except SQLAlchemyError:
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return {"error": "list not found"}
+
+    sent_notifications = send_bulk_notify(subscription_count, send_payload, rs)
+
+    return {"status": "OK", "sent": sent_notifications}
+
+
+def send_bulk_notify(subscription_count, send_payload, rows, recipient_limit=50000):
+    notify_bulk_subscribers = []
+    subscription_rows = []
+
+    template_type = send_payload.template_type.lower()
+    # Split notifications into separate calls based on limit
+    for i, row in enumerate(rows):
+        if i > 0 and (i % recipient_limit == 0):
+            notify_bulk_subscribers.append(subscription_rows)
+
+        if i % recipient_limit == 0:
+            # Reset and add headers
+            subscription_rows = []
+            if template_type == "email":
+                subscription_rows.append(["email address", "subscription id"])
+            elif template_type == "phone":
+                subscription_rows.append(["phone number", "subscription id"])
+
+        if row[template_type]:
+            subscription_rows.append([row[template_type], str(row["id"])])
+
+        if i == subscription_count - 1:
+            notify_bulk_subscribers.append(subscription_rows)
+
+    notifications_client = get_notify_client()
+
+    count_sent = 0
+    for subscribers in notify_bulk_subscribers:
+        notifications_client.send_bulk_notifications(
+            send_payload.job_name, subscribers, str(send_payload.template_id)
+        )
+        count_sent += len(subscribers) - 1
+
+    return count_sent
 
 
 def get_notify_client():
