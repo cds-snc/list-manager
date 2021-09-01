@@ -20,6 +20,9 @@ class List(Base):
     unsubscribe_email_template_id = Column(String)
     subscribe_phone_template_id = Column(String)
     unsubscribe_phone_template_id = Column(String)
+    subscribe_redirect_url = Column(String)
+    confirm_redirect_url = Column(String)
+    unsubscribe_redirect_url = Column(String)
     service_id = Column(String, nullable=False, index=True)
     created_at = Column(
         DateTime,

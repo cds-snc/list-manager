@@ -1,5 +1,6 @@
 from os import environ
 from fastapi import Depends, FastAPI, Response, status
+from fastapi.responses import RedirectResponse
 from sqlalchemy.exc import SQLAlchemyError, NoResultFound
 from sqlalchemy.orm import Session
 from database.db import db_session
@@ -10,7 +11,7 @@ from models.List import List
 from models.Subscription import Subscription
 
 from typing import Optional
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, HttpUrl
 from notifications_python_client.notifications import NotificationsAPIClient
 
 
@@ -60,6 +61,9 @@ class ListPayload(BaseModel):
     unsubscribe_email_template_id: Optional[UUID] = None
     subscribe_phone_template_id: Optional[UUID] = None
     unsubscribe_phone_template_id: Optional[UUID] = None
+    subscribe_redirect_url: Optional[HttpUrl] = None
+    confirm_redirect_url: Optional[HttpUrl] = None
+    unsubscribe_redirect_url: Optional[HttpUrl] = None
 
     class Config:
         extra = "forbid"
@@ -208,7 +212,10 @@ def create_subscription(
                 },
             )
 
-        return {"id": subscription.id}
+        if list.subscribe_redirect_url is not None:
+            return RedirectResponse(list.subscribe_redirect_url)
+        else:
+            return {"id": subscription.id}
     except SQLAlchemyError as err:
         log.error(err)
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -229,7 +236,12 @@ def confirm(subscription_id, response: Response, session: Session = Depends(get_
     try:
         subscription.confirmed = True
         session.commit()
-        return {"status": "OK"}
+
+        list = session.query(List).get(subscription.list_id)
+        if list.confirm_redirect_url is not None:
+            return RedirectResponse(list.confirm_redirect_url)
+        else:
+            return {"status": "OK"}
     except SQLAlchemyError as err:
         log.error(err)
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -272,7 +284,10 @@ def unsubscribe(
                 personalisation={"phone_number": phone, "name": list.name},
             )
 
-        return {"status": "OK"}
+        if list.unsubscribe_redirect_url is not None:
+            return RedirectResponse(list.unsubscribe_redirect_url)
+        else:
+            return {"status": "OK"}
     except SQLAlchemyError as err:
         log.error(err)
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
