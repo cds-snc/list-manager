@@ -314,33 +314,42 @@ def send(
         response.status_code = status.HTTP_404_NOT_FOUND
         return {"error": "list not found"}
 
-    RECIPIENT_LIMIT = 50000
+    sent_notifications = send_bulk_notify(subscription_count, send_payload, rs)
+
+    return {"status": "OK", "sent": sent_notifications}
+
+
+def send_bulk_notify(subscription_count, send_payload, rows, recipient_limit=50000):
     notify_bulk_subscribers = []
     subscription_rows = []
 
     template_type = send_payload.template_type.lower()
-    for i, row in enumerate(rs):
-        if (i % RECIPIENT_LIMIT == 0) or (i == subscription_count - 1):
+    for i, row in enumerate(rows):
+
+        if i > 0 and ((i == subscription_count - 1) or (i % recipient_limit == 0)):
+            notify_bulk_subscribers.append(subscription_rows)
+
+        if i % recipient_limit == 0:
+            # Reset and add headers
             subscription_rows = []
-            # Headers
             if template_type == "email":
-                subscription_rows.append(["email address", "subscription_id"])
+                subscription_rows.append(["email address", "subscription id"])
             elif template_type == "phone":
-                subscription_rows.append(["phone number", "subscription_id"])
+                subscription_rows.append(["phone number", "subscription id"])
 
-            if i > 0:
-                notify_bulk_subscribers.append(subscription_rows)
-
-        subscription_rows.append([row[template_type], str(row.id)])
+        if row[template_type]:
+            subscription_rows.append([row[template_type], str(row["id"])])
 
     notifications_client = get_notify_client()
 
+    count_sent = 0
     for subscribers in notify_bulk_subscribers:
         notifications_client.send_bulk_notifications(
             send_payload.job_name, subscribers, str(send_payload.template_id)
         )
+        count_sent += len(subscribers) - 1
 
-    return {"status": "OK"}
+    return count_sent
 
 
 def get_notify_client():
