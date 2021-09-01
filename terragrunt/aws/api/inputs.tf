@@ -1,3 +1,11 @@
+variable "domain_name" {
+  type = string
+}
+
+variable "hosted_zone_id" {
+  type = string
+}
+
 variable "notify_key" {
   type      = string
   sensitive = true
