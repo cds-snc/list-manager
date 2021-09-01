@@ -396,8 +396,8 @@ def test_send_email(mock_client, list_fixture):
 
 @patch("api_gateway.api.get_notify_client")
 def test_send_more_than_limit(mock_client):
-    limit = 3
-    items = 6
+    limit = 50000
+    items = 50001
     calls_to_make = -(-items // limit)  # Ceil of items / limit
 
     emails = [{"email": "t@s.t", "id": x} for x in range(items)]

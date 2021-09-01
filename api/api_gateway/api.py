@@ -364,9 +364,9 @@ def send_bulk_notify(subscription_count, send_payload, rows, recipient_limit=500
     subscription_rows = []
 
     template_type = send_payload.template_type.lower()
+    # Split notifications into separate calls based on limit
     for i, row in enumerate(rows):
-
-        if i > 0 and ((i == subscription_count - 1) or (i % recipient_limit == 0)):
+        if i > 0 and (i % recipient_limit == 0):
             notify_bulk_subscribers.append(subscription_rows)
 
         if i % recipient_limit == 0:
@@ -379,6 +379,9 @@ def send_bulk_notify(subscription_count, send_payload, rows, recipient_limit=500
 
         if row[template_type]:
             subscription_rows.append([row[template_type], str(row["id"])])
+
+        if i == subscription_count - 1:
+            notify_bulk_subscribers.append(subscription_rows)
 
     notifications_client = get_notify_client()
 
