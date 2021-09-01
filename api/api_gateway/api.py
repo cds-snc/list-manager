@@ -11,11 +11,11 @@ from models.List import List
 from models.Subscription import Subscription
 
 from typing import Optional
-from pydantic import BaseModel, EmailStr, HttpUrl
+from pydantic import BaseModel, EmailStr, HttpUrl, validator
 from notifications_python_client.notifications import NotificationsAPIClient
 
-
 NOTIFY_KEY = environ.get("NOTIFY_KEY")
+REDIRECT_ALLOW_LIST = ["valid.canada.ca", "valid.gc.ca"]
 
 app = FastAPI(root_path="/v1")
 
@@ -64,6 +64,14 @@ class ListPayload(BaseModel):
     subscribe_redirect_url: Optional[HttpUrl] = None
     confirm_redirect_url: Optional[HttpUrl] = None
     unsubscribe_redirect_url: Optional[HttpUrl] = None
+
+    @validator(
+        "subscribe_redirect_url", "confirm_redirect_url", "unsubscribe_redirect_url"
+    )
+    def redirect_url_in_allow_list(cls, v):
+        if v.host not in REDIRECT_ALLOW_LIST:
+            raise ValueError("domain must be in REDIRECT_ALLOW_LIST")
+        return v
 
     class Config:
         extra = "forbid"

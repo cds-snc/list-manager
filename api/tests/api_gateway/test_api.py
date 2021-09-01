@@ -1,4 +1,5 @@
 import os
+import pytest
 
 from fastapi.testclient import TestClient
 from unittest.mock import ANY, MagicMock, patch
@@ -368,6 +369,69 @@ def test_create_list_with_error():
     )
     assert response.json() == {"detail": ANY}
     assert response.status_code == 422
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("subscribe_redirect_url", "https://example.com/redirect_target"),
+        ("confirm_redirect_url", "https://example.com/redirect_target"),
+        ("unsubscribe_redirect_url", "https://example.com/redirect_target"),
+    ],
+)
+def test_create_list_invalid_domain(field, value):
+    response = client.post(
+        "/list",
+        json={
+            "name": f"new_name_{uuid.uuid4()}",
+            "language": "new_language",
+            "service_id": "new_service_id",
+            "subscribe_email_template_id": str(uuid.uuid4()),
+            "unsubscribe_email_template_id": str(uuid.uuid4()),
+            "subscribe_phone_template_id": str(uuid.uuid4()),
+            "unsubscribe_phone_template_id": str(uuid.uuid4()),
+            field: value,
+        },
+    )
+    assert response.json() == {
+        "detail": [
+            {
+                "loc": ["body", field],
+                "msg": "domain must be in REDIRECT_ALLOW_LIST",
+                "type": "value_error",
+            }
+        ]
+    }
+    assert response.status_code == 422
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("subscribe_redirect_url", "https://valid.canada.ca/redirect_target"),
+        ("confirm_redirect_url", "https://valid.canada.ca/redirect_target"),
+        ("unsubscribe_redirect_url", "https://valid.canada.ca/redirect_target"),
+        ("subscribe_redirect_url", "https://valid.gc.ca/redirect_target"),
+        ("confirm_redirect_url", "https://valid.gc.ca/redirect_target"),
+        ("unsubscribe_redirect_url", "https://valid.gc.ca/redirect_target"),
+    ],
+)
+def test_create_list_valid_domain(field, value):
+    response = client.post(
+        "/list",
+        json={
+            "name": f"new_name_{uuid.uuid4()}",
+            "language": "new_language",
+            "service_id": "new_service_id",
+            "subscribe_email_template_id": str(uuid.uuid4()),
+            "unsubscribe_email_template_id": str(uuid.uuid4()),
+            "subscribe_phone_template_id": str(uuid.uuid4()),
+            "unsubscribe_phone_template_id": str(uuid.uuid4()),
+            field: value,
+        },
+    )
+    assert response.json() == {"id": ANY}
+    assert response.status_code == 200
 
 
 def test_delete_list_with_bad_id():
