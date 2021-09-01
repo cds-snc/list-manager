@@ -1,5 +1,6 @@
 from os import environ
 from fastapi import Depends, FastAPI, Response, status
+from fastapi.responses import RedirectResponse
 from clients.notify import NotificationsAPIClient
 from sqlalchemy.exc import SQLAlchemyError, NoResultFound
 from sqlalchemy.orm import Session
@@ -14,12 +15,12 @@ from models.List import List
 from models.Subscription import Subscription
 
 from typing import Optional
-from pydantic import BaseModel, EmailStr, validator
+from pydantic import BaseModel, EmailStr, HttpUrl, validator
 
-
-NOTIFY_KEY = environ.get("NOTIFY_KEY")
 METRICS_EMAIL_TARGET = "email"
 METRICS_SMS_TARGET = "sms"
+NOTIFY_KEY = environ.get("NOTIFY_KEY")
+REDIRECT_ALLOW_LIST = ["valid.canada.ca", "valid.gc.ca"]
 
 app = FastAPI(root_path="/v1")
 metrics = Metrics(namespace="ListManager", service="api")
@@ -40,7 +41,6 @@ def version():
 
 
 def get_db_version(session):
-
     query = "SELECT version_num FROM alembic_version"
     full_name = session.execute(query).fetchone()[0]
     return full_name
@@ -66,6 +66,17 @@ class ListPayload(BaseModel):
     unsubscribe_email_template_id: Optional[UUID] = None
     subscribe_phone_template_id: Optional[UUID] = None
     unsubscribe_phone_template_id: Optional[UUID] = None
+    subscribe_redirect_url: Optional[HttpUrl] = None
+    confirm_redirect_url: Optional[HttpUrl] = None
+    unsubscribe_redirect_url: Optional[HttpUrl] = None
+
+    @validator(
+        "subscribe_redirect_url", "confirm_redirect_url", "unsubscribe_redirect_url"
+    )
+    def redirect_url_in_allow_list(cls, v):
+        if v.host not in REDIRECT_ALLOW_LIST:
+            raise ValueError("domain must be in REDIRECT_ALLOW_LIST")
+        return v
 
     class Config:
         extra = "forbid"
@@ -233,7 +244,10 @@ def create_subscription(
             metrics.add_metadata(key="language", value=list.language)
             metrics.add_metadata(key="target", value=METRICS_SMS_TARGET)
 
-        return {"id": subscription.id}
+        if list.subscribe_redirect_url is not None:
+            return RedirectResponse(list.subscribe_redirect_url)
+        else:
+            return {"id": subscription.id}
     except SQLAlchemyError as err:
         log.error(err)
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -265,7 +279,12 @@ def confirm(subscription_id, response: Response, session: Session = Depends(get_
         )
         metrics.add_metadata(key="subscription_id", value=str(subscription_id))
 
-        return {"status": "OK"}
+        list = session.query(List).get(subscription.list_id)
+        if list.confirm_redirect_url is not None:
+            return RedirectResponse(list.confirm_redirect_url)
+        else:
+            return {"status": "OK"}
+
     except SQLAlchemyError as err:
         log.error(err)
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -313,7 +332,10 @@ def unsubscribe(
         )
         metrics.add_metadata(key="unsubscription_id", value=str(unsubscription_id))
 
-        return {"status": "OK"}
+        if list.unsubscribe_redirect_url is not None:
+            return RedirectResponse(list.unsubscribe_redirect_url)
+        else:
+            return {"status": "OK"}
     except SQLAlchemyError as err:
         log.error(err)
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR

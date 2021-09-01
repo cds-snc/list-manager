@@ -1,6 +1,7 @@
 import os
 import json
 import main
+import pytest
 import uuid
 
 from fastapi.testclient import TestClient
@@ -136,6 +137,22 @@ def test_create_succeeds_with_email_and_phone(mock_client, list_fixture):
 
 
 @patch("api_gateway.api.get_notify_client")
+def test_create_succeeds_with_redirect(mock_client, list_fixture_with_redirects):
+    response = client.post(
+        "/subscription",
+        json={
+            "email": "test@example.com",
+            "phone": "123456789",
+            "list_id": str(list_fixture_with_redirects.id),
+        },
+    )
+    assert response.status_code == 307
+    assert response.headers == {
+        "location": list_fixture_with_redirects.subscribe_redirect_url
+    }
+
+
+@patch("api_gateway.api.get_notify_client")
 def test_create_subscription_with_undeclared_parameter(mock_client, list_fixture):
     response = client.post(
         "/subscription",
@@ -190,6 +207,21 @@ def test_confirm_with_correct_id(session, subscription_fixture):
     assert subscription_fixture.confirmed is True
 
 
+def test_confirm_with_correct_id_and_redirects(
+    session, subscription_fixture_with_redirects, list_fixture_with_redirects
+):
+    response = client.get(
+        f"/subscription/{str(subscription_fixture_with_redirects.id)}",
+        allow_redirects=False,
+    )
+    assert response.status_code == 307
+    assert response.headers == {
+        "location": list_fixture_with_redirects.confirm_redirect_url
+    }
+    session.refresh(subscription_fixture_with_redirects)
+    assert subscription_fixture_with_redirects.confirmed is True
+
+
 @patch("api_gateway.api.db_session")
 def test_confirm_with_correct_id_unknown_error(mock_db_session, subscription_fixture):
     mock_session = MagicMock()
@@ -232,6 +264,19 @@ def test_unsubscribe_event_with_correct_id(mock_client, subscription_fixture):
     )
 
 
+@patch("api_gateway.api.get_notify_client")
+def test_unsubscribe_event_with_correct_id_and_redirect(
+    mock_client, subscription_fixture_with_redirects, list_fixture_with_redirects
+):
+    response = client.delete(
+        f"/subscription/{str(subscription_fixture_with_redirects.id)}"
+    )
+    assert response.status_code == 307
+    assert response.headers == {
+        "location": list_fixture_with_redirects.unsubscribe_redirect_url
+    }
+
+
 @patch("api_gateway.api.db_session")
 @patch("api_gateway.api.get_notify_client")
 def test_unsubscribe_event_with_correct_id_unknown_error(
@@ -245,7 +290,7 @@ def test_unsubscribe_event_with_correct_id_unknown_error(
     assert response.status_code == 500
 
 
-def test_return_all_lists(list_fixture):
+def test_return_all_lists(list_fixture, list_fixture_with_redirects):
     response = client.get("/lists")
     assert response.json() == [
         {
@@ -253,12 +298,18 @@ def test_return_all_lists(list_fixture):
             "language": list_fixture.language,
             "name": list_fixture.name,
             "service": list_fixture.service_id,
-        }
+        },
+        {
+            "id": str(list_fixture_with_redirects.id),
+            "language": list_fixture_with_redirects.language,
+            "name": list_fixture_with_redirects.name,
+            "service": list_fixture_with_redirects.service_id,
+        },
     ]
     assert response.status_code == 200
 
 
-def test_return_lists_by_service(list_fixture):
+def test_return_lists_by_service(list_fixture, list_fixture_with_redirects):
     response = client.get(f"/lists/{list_fixture.service_id}")
     assert response.json() == [
         {
@@ -321,6 +372,69 @@ def test_create_list_with_error():
     )
     assert response.json() == {"detail": ANY}
     assert response.status_code == 422
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("subscribe_redirect_url", "https://example.com/redirect_target"),
+        ("confirm_redirect_url", "https://example.com/redirect_target"),
+        ("unsubscribe_redirect_url", "https://example.com/redirect_target"),
+    ],
+)
+def test_create_list_invalid_domain(field, value):
+    response = client.post(
+        "/list",
+        json={
+            "name": f"new_name_{uuid.uuid4()}",
+            "language": "new_language",
+            "service_id": "new_service_id",
+            "subscribe_email_template_id": str(uuid.uuid4()),
+            "unsubscribe_email_template_id": str(uuid.uuid4()),
+            "subscribe_phone_template_id": str(uuid.uuid4()),
+            "unsubscribe_phone_template_id": str(uuid.uuid4()),
+            field: value,
+        },
+    )
+    assert response.json() == {
+        "detail": [
+            {
+                "loc": ["body", field],
+                "msg": "domain must be in REDIRECT_ALLOW_LIST",
+                "type": "value_error",
+            }
+        ]
+    }
+    assert response.status_code == 422
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("subscribe_redirect_url", "https://valid.canada.ca/redirect_target"),
+        ("confirm_redirect_url", "https://valid.canada.ca/redirect_target"),
+        ("unsubscribe_redirect_url", "https://valid.canada.ca/redirect_target"),
+        ("subscribe_redirect_url", "https://valid.gc.ca/redirect_target"),
+        ("confirm_redirect_url", "https://valid.gc.ca/redirect_target"),
+        ("unsubscribe_redirect_url", "https://valid.gc.ca/redirect_target"),
+    ],
+)
+def test_create_list_valid_domain(field, value):
+    response = client.post(
+        "/list",
+        json={
+            "name": f"new_name_{uuid.uuid4()}",
+            "language": "new_language",
+            "service_id": "new_service_id",
+            "subscribe_email_template_id": str(uuid.uuid4()),
+            "unsubscribe_email_template_id": str(uuid.uuid4()),
+            "subscribe_phone_template_id": str(uuid.uuid4()),
+            "unsubscribe_phone_template_id": str(uuid.uuid4()),
+            field: value,
+        },
+    )
+    assert response.json() == {"id": ANY}
+    assert response.status_code == 200
 
 
 def test_delete_list_with_bad_id():

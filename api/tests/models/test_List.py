@@ -14,6 +14,9 @@ def test_list_model():
         unsubscribe_email_template_id="unsubscribe_email_template_id",
         subscribe_phone_template_id="subscribe_phone_template_id",
         unsubscribe_phone_template_id="unsubscribe_phone_template_id",
+        subscribe_redirect_url="subscribe_redirect_url",
+        confirm_redirect_url="confirm_redirect_url",
+        unsubscribe_redirect_url="unsubscribe_redirect_url",
     )
     assert list.name == "name"
     assert list.language == "language"
@@ -21,6 +24,9 @@ def test_list_model():
     assert list.unsubscribe_email_template_id == "unsubscribe_email_template_id"
     assert list.subscribe_phone_template_id == "subscribe_phone_template_id"
     assert list.unsubscribe_phone_template_id == "unsubscribe_phone_template_id"
+    assert list.subscribe_redirect_url == "subscribe_redirect_url"
+    assert list.confirm_redirect_url == "confirm_redirect_url"
+    assert list.unsubscribe_redirect_url == "unsubscribe_redirect_url"
 
 
 def test_list_model_saved(assert_new_model_saved, session):
