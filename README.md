@@ -19,15 +19,6 @@ Bring up the local dev environment:
 make dev
 ```
 
-Currently, we append the `/v1` for our deployment, but locally you don't need this. So to view the docs, you have to change `api.py` from:
-```
-app = FastAPI(root_path="/v1")
-```
-to:
-```
-app = FastAPI(root_path="/")
-```
-
 ## Load testing
 The API contains a `locust` file to test a basic workflow:
 
