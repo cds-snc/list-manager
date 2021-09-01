@@ -272,14 +272,14 @@ def confirm(subscription_id, response: Response, session: Session = Depends(get_
         return {"error": "error confirming subscription"}
 
 
-@app.delete("/subscription/{unsubscription_id}")
+@app.delete("/subscription/{subscription_id}")
 def unsubscribe(
-    unsubscription_id, response: Response, session: Session = Depends(get_db)
+    subscription_id, response: Response, session: Session = Depends(get_db)
 ):
     notifications_client = get_notify_client()
 
     try:
-        subscription = session.query(Subscription).get(unsubscription_id)
+        subscription = session.query(Subscription).get(subscription_id)
         if subscription is None:
             raise NoResultFound
     except SQLAlchemyError:
@@ -311,7 +311,7 @@ def unsubscribe(
         metrics.add_metric(
             name="SuccessfulUnsubscription", unit=MetricUnit.Count, value=1
         )
-        metrics.add_metadata(key="unsubscription_id", value=str(unsubscription_id))
+        metrics.add_metadata(key="subscription_id", value=str(subscription_id))
 
         return {"status": "OK"}
     except SQLAlchemyError as err:
