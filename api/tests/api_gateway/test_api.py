@@ -1,11 +1,13 @@
 import os
+import json
+import main
+import uuid
 
 from fastapi.testclient import TestClient
 from unittest.mock import ANY, MagicMock, patch
 
 from api_gateway import api
 from sqlalchemy.exc import SQLAlchemyError
-import uuid
 
 from models.List import List
 
@@ -96,7 +98,7 @@ def test_create_succeeds_with_email(mock_client, list_fixture):
     assert response.status_code == 200
     mock_client().send_email_notification.assert_called_once_with(
         email_address="test@example.com",
-        template_id="fixture_subscribe_email_template_id",
+        template_id="97375f47-0fb1-4459-ab36-97a5c1ba358f",
         personalisation={
             "email_address": "test@example.com",
             "name": "fixture_name",
@@ -114,7 +116,7 @@ def test_create_succeeds_with_phone(mock_client, list_fixture):
     assert response.status_code == 200
     mock_client().send_sms_notification.assert_called_once_with(
         phone_number="123456789",
-        template_id="fixture_subscribe_phone_template_id",
+        template_id="02427c7f-d041-411d-9b92-5890cade3d9a",
         personalisation={"phone_number": "123456789", "name": "fixture_name"},
     )
 
@@ -220,12 +222,12 @@ def test_unsubscribe_event_with_correct_id(mock_client, subscription_fixture):
 
     mock_client().send_sms_notification.assert_called_once_with(
         phone_number="fixture_phone",
-        template_id="fixture_unsubscribe_phone_template_id",
+        template_id="dae60d25-0c83-45b7-b2ba-db208281e4e4",
         personalisation={"phone_number": "fixture_phone", "name": "fixture_name"},
     )
     mock_client().send_email_notification.assert_called_once_with(
         email_address="fixture_email",
-        template_id="fixture_unsubscribe_email_template_id",
+        template_id="a6ea8854-3f45-4f5c-808f-61612d920eb3",
         personalisation={"email_address": "fixture_email", "name": "fixture_name"},
     )
 
@@ -466,3 +468,35 @@ def test_send_sms_only(mock_client):
         "Job Name", subscriber_arr, template_id
     )
     assert emails_sent == 1
+
+
+@patch("main.Mangum")
+def test_metrics(mock_mangum, context_fixture, capsys):
+
+    mock_asgi_handler = MagicMock()
+    mock_asgi_handler.return_value = True
+    mock_mangum.return_value = mock_asgi_handler
+    main.handler({"httpMethod": "GET"}, context_fixture)
+
+    log = capsys.readouterr().out.strip()
+
+    metrics_output = json.loads(log)
+
+    assert "ListCreated" in str(
+        metrics_output["_aws"]["CloudWatchMetrics"][0]["Metrics"]
+    )
+    assert "ListDeleted" in str(
+        metrics_output["_aws"]["CloudWatchMetrics"][0]["Metrics"]
+    )
+    assert "SuccessfulSubscription" in str(
+        metrics_output["_aws"]["CloudWatchMetrics"][0]["Metrics"]
+    )
+    assert "UnsuccessfulSubscription" in str(
+        metrics_output["_aws"]["CloudWatchMetrics"][0]["Metrics"]
+    )
+    assert "SuccessfulConfirmation" in str(
+        metrics_output["_aws"]["CloudWatchMetrics"][0]["Metrics"]
+    )
+    assert "SuccessfulUnsubscription" in str(
+        metrics_output["_aws"]["CloudWatchMetrics"][0]["Metrics"]
+    )
