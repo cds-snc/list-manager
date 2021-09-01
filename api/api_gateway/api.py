@@ -1,5 +1,6 @@
 from os import environ
 from fastapi import Depends, FastAPI, Response, status
+from clients.notify import NotificationsAPIClient
 from sqlalchemy.exc import SQLAlchemyError, NoResultFound
 from sqlalchemy.orm import Session
 from database.db import db_session
@@ -13,8 +14,7 @@ from models.List import List
 from models.Subscription import Subscription
 
 from typing import Optional
-from pydantic import BaseModel, EmailStr
-from notifications_python_client.notifications import NotificationsAPIClient
+from pydantic import BaseModel, EmailStr, validator
 
 
 NOTIFY_KEY = environ.get("NOTIFY_KEY")
@@ -318,6 +318,81 @@ def unsubscribe(
         log.error(err)
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {"error": "error deleting subscription"}
+
+
+class SendPayload(BaseModel):
+    list_id: UUID
+    template_id: UUID
+    template_type: str
+    job_name: Optional[str] = "Bulk email"
+
+    @validator("template_type")
+    def template_type_email_or_phone(cls, v):
+        if v.lower() not in ["email", "phone"]:
+            raise ValueError("must be either email or phone")
+        return v
+
+    class Config:
+        extra = "forbid"
+
+
+@app.post("/send")
+def send(
+    send_payload: SendPayload, response: Response, session: Session = Depends(get_db)
+):
+    try:
+        q = session.query(
+            Subscription.email, Subscription.phone, Subscription.id
+        ).filter(Subscription.list_id == send_payload.list_id)
+        subscription_count = q.count()
+
+        if subscription_count == 0:
+            raise NoResultFound
+
+        rs = q.all()
+    except SQLAlchemyError:
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return {"error": "list not found"}
+
+    sent_notifications = send_bulk_notify(subscription_count, send_payload, rs)
+
+    return {"status": "OK", "sent": sent_notifications}
+
+
+def send_bulk_notify(subscription_count, send_payload, rows, recipient_limit=50000):
+    notify_bulk_subscribers = []
+    subscription_rows = []
+
+    template_type = send_payload.template_type.lower()
+    # Split notifications into separate calls based on limit
+    for i, row in enumerate(rows):
+        if i > 0 and (i % recipient_limit == 0):
+            notify_bulk_subscribers.append(subscription_rows)
+
+        if i % recipient_limit == 0:
+            # Reset and add headers
+            subscription_rows = []
+            if template_type == "email":
+                subscription_rows.append(["email address", "subscription id"])
+            elif template_type == "phone":
+                subscription_rows.append(["phone number", "subscription id"])
+
+        if row[template_type]:
+            subscription_rows.append([row[template_type], str(row["id"])])
+
+        if i == subscription_count - 1:
+            notify_bulk_subscribers.append(subscription_rows)
+
+    notifications_client = get_notify_client()
+
+    count_sent = 0
+    for subscribers in notify_bulk_subscribers:
+        notifications_client.send_bulk_notifications(
+            send_payload.job_name, subscribers, str(send_payload.template_id)
+        )
+        count_sent += len(subscribers) - 1
+
+    return count_sent
 
 
 def get_notify_client():
