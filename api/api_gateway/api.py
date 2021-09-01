@@ -22,7 +22,7 @@ METRICS_SMS_TARGET = "sms"
 NOTIFY_KEY = environ.get("NOTIFY_KEY")
 REDIRECT_ALLOW_LIST = ["valid.canada.ca", "valid.gc.ca"]
 
-app = FastAPI(root_path="/v1")
+app = FastAPI()
 metrics = Metrics(namespace="ListManager", service="api")
 
 
