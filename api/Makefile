@@ -28,7 +28,7 @@ migrations:
 	alembic upgrade head
 
 test:
-	CI=True coverage run -m pytest -s -vv tests &&\
+	API_AUTH_TOKEN=e184bd87-feac-4582-8ec8-dc63557faa68 CI=True coverage run -m pytest -s -vv tests &&\
 	coverage report -m
 
 fmt-ci:

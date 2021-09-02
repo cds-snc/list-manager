@@ -1,12 +1,12 @@
 from os import environ
-from fastapi import Depends, FastAPI, Response, status
+from fastapi import Depends, FastAPI, HTTPException, Response, Request, status
 from fastapi.responses import RedirectResponse
 from clients.notify import NotificationsAPIClient
 from sqlalchemy.exc import SQLAlchemyError, NoResultFound
 from sqlalchemy.orm import Session
 from database.db import db_session
 from logger import log
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from aws_lambda_powertools import Metrics
 from aws_lambda_powertools.metrics import MetricUnit
@@ -17,6 +17,7 @@ from models.Subscription import Subscription
 from typing import Optional
 from pydantic import BaseModel, EmailStr, HttpUrl, validator
 
+API_AUTH_TOKEN = environ.get("API_AUTH_TOKEN", uuid4())
 METRICS_EMAIL_TARGET = "email"
 METRICS_SMS_TARGET = "sms"
 NOTIFY_KEY = environ.get("NOTIFY_KEY")
@@ -33,6 +34,13 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+def verify_token(req: Request):
+    token = req.headers["Authorization"]
+    if token != API_AUTH_TOKEN:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    return True
 
 
 @app.get("/version")
@@ -116,7 +124,10 @@ def lists_by_service(service_id, session: Session = Depends(get_db)):
 
 @app.post("/list")
 def create_list(
-    list_payload: ListPayload, response: Response, session: Session = Depends(get_db)
+    list_payload: ListPayload,
+    response: Response,
+    session: Session = Depends(get_db),
+    _authorized: bool = Depends(verify_token),
 ):
 
     try:
@@ -147,7 +158,12 @@ def create_list(
 
 
 @app.delete("/list/{list_id}")
-def delete_list(list_id, response: Response, session: Session = Depends(get_db)):
+def delete_list(
+    list_id,
+    response: Response,
+    session: Session = Depends(get_db),
+    _authorized: bool = Depends(verify_token),
+):
     try:
         list = session.query(List).get(list_id)
         if list is None:
