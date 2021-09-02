@@ -641,7 +641,9 @@ def test_verify_token_throws_an_exception_if_token_is_not_correct(mock_metrics):
     request.headers = {"Authorization": "invalid"}
     with pytest.raises(HTTPException):
         assert api.verify_token(request)
-    mock_metrics.add_metric.assert_called_once_with(name='IncorrectAuthorizationToken', unit=MetricUnit.Count, value=1)
+    mock_metrics.add_metric.assert_called_once_with(
+        name="IncorrectAuthorizationToken", unit=MetricUnit.Count, value=1
+    )
 
 
 def test_verify_token_returns_true_if_token_is_correct():
