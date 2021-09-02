@@ -37,7 +37,7 @@ def get_db():
 
 
 def verify_token(req: Request):
-    token = req.headers["Authorization"]
+    token = req.headers.get("Authorization", None)
     if token != API_AUTH_TOKEN:
         raise HTTPException(status_code=401, detail="Unauthorized")
     return True
