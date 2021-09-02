@@ -4,7 +4,9 @@ import main
 import pytest
 import uuid
 
+from aws_lambda_powertools.metrics import MetricUnit
 from fastapi.testclient import TestClient
+from fastapi import HTTPException
 from unittest.mock import ANY, MagicMock, patch
 
 from api_gateway import api
@@ -334,6 +336,7 @@ def test_create_list():
             "subscribe_phone_template_id": str(uuid.uuid4()),
             "unsubscribe_phone_template_id": str(uuid.uuid4()),
         },
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
     )
     assert response.json() == {"id": ANY}
     assert response.status_code == 200
@@ -352,6 +355,7 @@ def test_create_list_with_undeclared_parameter():
             "unsubscribe_phone_template_id": str(uuid.uuid4()),
             "foo": "bar",
         },
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
     )
     assert response.json() == {"detail": ANY}
     assert response.status_code == 422
@@ -369,6 +373,7 @@ def test_create_list_with_error():
             "subscribe_phone_template_id": "new_subscribe_phone_template_id",
             "unsubscribe_phone_template_id": "new_unsubscribe_phone_template_id",
         },
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
     )
     assert response.json() == {"detail": ANY}
     assert response.status_code == 422
@@ -395,6 +400,7 @@ def test_create_list_invalid_domain(field, value):
             "unsubscribe_phone_template_id": str(uuid.uuid4()),
             field: value,
         },
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
     )
     assert response.json() == {
         "detail": [
@@ -432,19 +438,26 @@ def test_create_list_valid_domain(field, value):
             "unsubscribe_phone_template_id": str(uuid.uuid4()),
             field: value,
         },
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
     )
     assert response.json() == {"id": ANY}
     assert response.status_code == 200
 
 
 def test_delete_list_with_bad_id():
-    response = client.delete("/list/foo")
+    response = client.delete(
+        "/list/foo",
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
+    )
     assert response.json() == {"error": "list not found"}
     assert response.status_code == 404
 
 
 def test_delete_list_with_id_not_found():
-    response = client.delete(f"/list/{str(uuid.uuid4())}")
+    response = client.delete(
+        f"/list/{str(uuid.uuid4())}",
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
+    )
     assert response.json() == {"error": "list not found"}
     assert response.status_code == 404
 
@@ -461,7 +474,10 @@ def test_delete_list_with_correct_id(session):
     )
     session.add(list)
     session.commit()
-    response = client.delete(f"/list/{str(list.id)}")
+    response = client.delete(
+        f"/list/{str(list.id)}",
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
+    )
     assert response.json() == {"status": "OK"}
     assert response.status_code == 200
 
@@ -471,7 +487,10 @@ def test_delete_list_with_correct_id_unknown_error(mock_db_session, list_fixture
     mock_session = MagicMock()
     mock_session.commit.side_effect = SQLAlchemyError()
     mock_db_session.return_value = mock_session
-    response = client.delete(f"/list/{str(list_fixture.id)}")
+    response = client.delete(
+        f"/list/{str(list_fixture.id)}",
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
+    )
     assert response.json() == {"error": "error deleting list"}
     assert response.status_code == 500
 
@@ -614,3 +633,20 @@ def test_metrics(mock_mangum, context_fixture, capsys):
     assert "SuccessfulUnsubscription" in str(
         metrics_output["_aws"]["CloudWatchMetrics"][0]["Metrics"]
     )
+
+
+@patch("api_gateway.api.metrics")
+def test_verify_token_throws_an_exception_if_token_is_not_correct(mock_metrics):
+    request = MagicMock()
+    request.headers = {"Authorization": "invalid"}
+    with pytest.raises(HTTPException):
+        assert api.verify_token(request)
+    mock_metrics.add_metric.assert_called_once_with(
+        name="IncorrectAuthorizationToken", unit=MetricUnit.Count, value=1
+    )
+
+
+def test_verify_token_returns_true_if_token_is_correct():
+    request = MagicMock()
+    request.headers = {"Authorization": os.environ["API_AUTH_TOKEN"]}
+    assert api.verify_token(request)
