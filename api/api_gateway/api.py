@@ -39,6 +39,9 @@ def get_db():
 def verify_token(req: Request):
     token = req.headers.get("Authorization", None)
     if token != API_AUTH_TOKEN:
+        metrics.add_metric(
+            name="IncorrectAuthorizationToken", unit=MetricUnit.Count, value=1
+        )
         raise HTTPException(status_code=401, detail="Unauthorized")
     return True
 

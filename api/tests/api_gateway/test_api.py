@@ -4,6 +4,7 @@ import main
 import pytest
 import uuid
 
+from aws_lambda_powertools.metrics import MetricUnit
 from fastapi.testclient import TestClient
 from fastapi import HTTPException
 from unittest.mock import ANY, MagicMock, patch
@@ -634,11 +635,13 @@ def test_metrics(mock_mangum, context_fixture, capsys):
     )
 
 
-def test_verify_token_throws_an_exception_if_token_is_not_correct():
+@patch("api_gateway.api.metrics")
+def test_verify_token_throws_an_exception_if_token_is_not_correct(mock_metrics):
     request = MagicMock()
     request.headers = {"Authorization": "invalid"}
     with pytest.raises(HTTPException):
         assert api.verify_token(request)
+    mock_metrics.add_metric.assert_called_once_with(name='IncorrectAuthorizationToken', unit=MetricUnit.Count, value=1)
 
 
 def test_verify_token_returns_true_if_token_is_correct():
