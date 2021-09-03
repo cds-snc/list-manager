@@ -160,6 +160,48 @@ def create_list(
         return {"error": f"error saving list: {err}"}
 
 
+@app.put("/list/{list_id}")
+def update_list(
+    list_id,
+    list_payload: ListPayload,
+    response: Response,
+    session: Session = Depends(get_db),
+    _authorized: bool = Depends(verify_token),
+):
+    try:
+        list = session.query(List).get(list_id)
+        if list is None:
+            raise NoResultFound
+    except SQLAlchemyError:
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return {"error": "list not found"}
+
+    try:
+        list.name = list_payload.name
+        list.language = list_payload.language
+        list.service_id = list_payload.service_id
+        list.subscribe_email_template_id = str(list_payload.subscribe_email_template_id)
+
+        list.unsubscribe_email_template_id = str(
+            list_payload.unsubscribe_email_template_id
+        )
+
+        list.subscribe_phone_template_id = str(list_payload.subscribe_phone_template_id)
+
+        list.unsubscribe_phone_template_id = str(
+            list_payload.unsubscribe_phone_template_id
+        )
+        session.commit()
+        metrics.add_metric(name="ListUpdated", unit=MetricUnit.Count, value=1)
+        metrics.add_metadata(key="list_id", value=str(list_id))
+
+        return {"status": "OK"}
+    except SQLAlchemyError as err:
+        log.error(err)
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"error": "error updating list"}
+
+
 @app.delete("/list/{list_id}")
 def delete_list(
     list_id,
