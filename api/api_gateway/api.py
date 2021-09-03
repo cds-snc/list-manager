@@ -311,6 +311,7 @@ def confirm(subscription_id, response: Response, session: Session = Depends(get_
 
 
 @app.delete("/subscription/{subscription_id}")
+@app.get("/unsubscribe/{subscription_id}")
 def unsubscribe(
     subscription_id, response: Response, session: Session = Depends(get_db)
 ):
