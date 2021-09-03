@@ -554,6 +554,74 @@ def test_delete_list_with_correct_id_unknown_error(mock_db_session, list_fixture
     assert response.status_code == 500
 
 
+def test_edit_list_with_bad_id():
+    response = client.put(
+        "/list/foo",
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
+        json={"name": "name", "language": "language", "service_id": "service_id"},
+    )
+    assert response.json() == {"error": "list not found"}
+    assert response.status_code == 404
+
+
+def test_edit_list_with_id_not_found():
+    response = client.put(
+        f"/list/{str(uuid.uuid4())}",
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
+        json={"name": "name", "language": "language", "service_id": "service_id"},
+    )
+    assert response.json() == {"error": "list not found"}
+    assert response.status_code == 404
+
+
+def test_edit_list_with_correct_id(session):
+    list = List(
+        name="edit_name",
+        language="edit_language",
+        service_id="edit_service_id",
+        subscribe_email_template_id="edit_subscribe_email_template_id",
+        unsubscribe_email_template_id="edit_unsubscribe_email_template_id",
+        subscribe_phone_template_id="edit_subscribe_phone_template_id",
+        unsubscribe_phone_template_id="edit_unsubscribe_phone_template_id",
+    )
+    session.add(list)
+    session.commit()
+    response = client.put(
+        f"/list/{str(list.id)}",
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
+        json={
+            "name": "edited_name",
+            "language": "edited_language",
+            "service_id": "edited_service_id",
+        },
+    )
+    assert response.json() == {"status": "OK"}
+    assert response.status_code == 200
+    session.expire_all()
+    list = session.query(List).get(list.id)
+    assert list.name == "edited_name"
+    assert list.language == "edited_language"
+    assert list.service_id == "edited_service_id"
+
+
+@patch("api_gateway.api.db_session")
+def test_edit_list_with_correct_id_unknown_error(mock_db_session, list_fixture):
+    mock_session = MagicMock()
+    mock_session.commit.side_effect = SQLAlchemyError()
+    mock_db_session.return_value = mock_session
+    response = client.put(
+        f"/list/{str(list_fixture.id)}",
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
+        json={
+            "name": "edited_name",
+            "language": "edited_language",
+            "service_id": "edited_service_id",
+        },
+    )
+    assert response.json() == {"error": "error updating list"}
+    assert response.status_code == 500
+
+
 @patch("api_gateway.api.get_notify_client")
 def test_send_invalid_list(mock_client):
     response = client.post(
