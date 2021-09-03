@@ -84,7 +84,7 @@ def setup_db():
     yield
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def subscription_fixture(session, list_fixture):
     subscription = Subscription(
         email="fixture_email", phone="fixture_phone", list=list_fixture
@@ -94,7 +94,7 @@ def subscription_fixture(session, list_fixture):
     return subscription
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def subscription_fixture_with_redirects(session, list_fixture_with_redirects):
     subscription = Subscription(
         email="fixture_email", phone="fixture_phone", list=list_fixture_with_redirects

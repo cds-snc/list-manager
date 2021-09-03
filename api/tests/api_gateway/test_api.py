@@ -292,6 +292,65 @@ def test_unsubscribe_event_with_correct_id_unknown_error(
     assert response.status_code == 500
 
 
+@patch("api_gateway.api.get_notify_client")
+def test_get_unsubscribe_event_with_bad_id(mock_client):
+    response = client.get("/unsubscribe/foo")
+    assert response.json() == {"error": "subscription not found"}
+    assert response.status_code == 404
+
+
+@patch("api_gateway.api.get_notify_client")
+def test_get_unsubscribe_event_with_id_not_found(mock_client):
+    response = client.get(f"/unsubscribe/{str(uuid.uuid4())}")
+    assert response.json() == {"error": "subscription not found"}
+    assert response.status_code == 404
+
+
+@patch("api_gateway.api.get_notify_client")
+def test_get_unsubscribe_event_with_correct_id(mock_client, subscription_fixture):
+    response = client.get(f"/unsubscribe/{str(subscription_fixture.id)}")
+    assert response.json() == {"status": "OK"}
+    assert response.status_code == 200
+
+    mock_client().send_sms_notification.assert_called_once_with(
+        phone_number="fixture_phone",
+        template_id="dae60d25-0c83-45b7-b2ba-db208281e4e4",
+        personalisation={"phone_number": "fixture_phone", "name": "fixture_name"},
+    )
+    mock_client().send_email_notification.assert_called_once_with(
+        email_address="fixture_email",
+        template_id="a6ea8854-3f45-4f5c-808f-61612d920eb3",
+        personalisation={"email_address": "fixture_email", "name": "fixture_name"},
+    )
+
+
+@patch("api_gateway.api.get_notify_client")
+def test_get_unsubscribe_event_with_correct_id_and_redirect(
+    mock_client, subscription_fixture_with_redirects, list_fixture_with_redirects
+):
+    response = client.get(
+        f"/unsubscribe/{str(subscription_fixture_with_redirects.id)}",
+        allow_redirects=False,
+    )
+    assert response.status_code == 307
+    assert response.headers == {
+        "location": list_fixture_with_redirects.unsubscribe_redirect_url
+    }
+
+
+@patch("api_gateway.api.db_session")
+@patch("api_gateway.api.get_notify_client")
+def test_get_unsubscribe_event_with_correct_id_unknown_error(
+    mock_client, mock_db_session, subscription_fixture
+):
+    mock_session = MagicMock()
+    mock_session.commit.side_effect = SQLAlchemyError()
+    mock_db_session.return_value = mock_session
+    response = client.get(f"/unsubscribe/{str(subscription_fixture.id)}")
+    assert response.json() == {"error": "error deleting subscription"}
+    assert response.status_code == 500
+
+
 def test_return_all_lists(list_fixture, list_fixture_with_redirects):
     response = client.get("/lists")
     assert response.json() == [
