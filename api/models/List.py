@@ -55,3 +55,14 @@ class List(Base):
     def validate_service_id(self, _key, value):
         assert value != ""
         return value.lower()
+
+    def to_dict(self):
+        dict_ = {}
+        for key in self.__mapper__.c.keys():
+            if getattr(self, key) is not None and key not in [
+                "id",
+                "created_at",
+                "updated_at",
+            ]:
+                dict_[key] = getattr(self, key)
+        return dict_

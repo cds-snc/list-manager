@@ -177,24 +177,14 @@ def update_list(
         return {"error": "list not found"}
 
     try:
-        list.name = list_payload.name
-        list.language = list_payload.language
-        list.service_id = list_payload.service_id
-        list.subscribe_email_template_id = str(list_payload.subscribe_email_template_id)
 
-        list.unsubscribe_email_template_id = str(
-            list_payload.unsubscribe_email_template_id
+        session.query(List).filter(List.id == list.id).update(
+            list_payload.dict(exclude_unset=True)
         )
 
-        list.subscribe_phone_template_id = str(list_payload.subscribe_phone_template_id)
-
-        list.unsubscribe_phone_template_id = str(
-            list_payload.unsubscribe_phone_template_id
-        )
         session.commit()
         metrics.add_metric(name="ListUpdated", unit=MetricUnit.Count, value=1)
         metrics.add_metadata(key="list_id", value=str(list_id))
-
         return {"status": "OK"}
     except SQLAlchemyError as err:
         log.error(err)
