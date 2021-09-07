@@ -1,13 +1,13 @@
 from os import environ
 import os
-from fastapi import Depends, FastAPI, Response, status
+from fastapi import Depends, FastAPI, HTTPException, Response, Request, status
 from fastapi.responses import RedirectResponse
 from clients.notify import NotificationsAPIClient
 from sqlalchemy.exc import SQLAlchemyError, NoResultFound
 from sqlalchemy.orm import Session
 from database.db import db_session
 from logger import log
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from aws_lambda_powertools import Metrics
 from aws_lambda_powertools.metrics import MetricUnit
@@ -18,6 +18,7 @@ from models.Subscription import Subscription
 from typing import Optional
 from pydantic import BaseModel, EmailStr, HttpUrl, validator
 
+API_AUTH_TOKEN = environ.get("API_AUTH_TOKEN", uuid4())
 METRICS_EMAIL_TARGET = "email"
 METRICS_SMS_TARGET = "sms"
 NOTIFY_KEY = environ.get("NOTIFY_KEY")
@@ -34,6 +35,16 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+def verify_token(req: Request):
+    token = req.headers.get("Authorization", None)
+    if token != API_AUTH_TOKEN:
+        metrics.add_metric(
+            name="IncorrectAuthorizationToken", unit=MetricUnit.Count, value=1
+        )
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    return True
 
 
 @app.get("/version")
@@ -117,7 +128,10 @@ def lists_by_service(service_id, session: Session = Depends(get_db)):
 
 @app.post("/list")
 def create_list(
-    list_payload: ListPayload, response: Response, session: Session = Depends(get_db)
+    list_payload: ListPayload,
+    response: Response,
+    session: Session = Depends(get_db),
+    _authorized: bool = Depends(verify_token),
 ):
 
     try:
@@ -147,8 +161,45 @@ def create_list(
         return {"error": f"error saving list: {err}"}
 
 
+@app.put("/list/{list_id}")
+def update_list(
+    list_id,
+    list_payload: ListPayload,
+    response: Response,
+    session: Session = Depends(get_db),
+    _authorized: bool = Depends(verify_token),
+):
+    try:
+        list = session.query(List).get(list_id)
+        if list is None:
+            raise NoResultFound
+    except SQLAlchemyError:
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return {"error": "list not found"}
+
+    try:
+
+        session.query(List).filter(List.id == list.id).update(
+            list_payload.dict(exclude_unset=True)
+        )
+
+        session.commit()
+        metrics.add_metric(name="ListUpdated", unit=MetricUnit.Count, value=1)
+        metrics.add_metadata(key="list_id", value=str(list_id))
+        return {"status": "OK"}
+    except SQLAlchemyError as err:
+        log.error(err)
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"error": "error updating list"}
+
+
 @app.delete("/list/{list_id}")
-def delete_list(list_id, response: Response, session: Session = Depends(get_db)):
+def delete_list(
+    list_id,
+    response: Response,
+    session: Session = Depends(get_db),
+    _authorized: bool = Depends(verify_token),
+):
     try:
         list = session.query(List).get(list_id)
         if list is None:
@@ -296,6 +347,7 @@ def confirm(subscription_id, response: Response, session: Session = Depends(get_
 
 
 @app.delete("/subscription/{subscription_id}")
+@app.get("/unsubscribe/{subscription_id}")
 def unsubscribe(
     subscription_id, response: Response, session: Session = Depends(get_db)
 ):

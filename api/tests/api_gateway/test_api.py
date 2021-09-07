@@ -4,7 +4,9 @@ import main
 import pytest
 import uuid
 
+from aws_lambda_powertools.metrics import MetricUnit
 from fastapi.testclient import TestClient
+from fastapi import HTTPException
 from unittest.mock import ANY, MagicMock, patch
 
 from api_gateway import api
@@ -291,6 +293,65 @@ def test_unsubscribe_event_with_correct_id_unknown_error(
     assert response.status_code == 500
 
 
+@patch("api_gateway.api.get_notify_client")
+def test_get_unsubscribe_event_with_bad_id(mock_client):
+    response = client.get("/unsubscribe/foo")
+    assert response.json() == {"error": "subscription not found"}
+    assert response.status_code == 404
+
+
+@patch("api_gateway.api.get_notify_client")
+def test_get_unsubscribe_event_with_id_not_found(mock_client):
+    response = client.get(f"/unsubscribe/{str(uuid.uuid4())}")
+    assert response.json() == {"error": "subscription not found"}
+    assert response.status_code == 404
+
+
+@patch("api_gateway.api.get_notify_client")
+def test_get_unsubscribe_event_with_correct_id(mock_client, subscription_fixture):
+    response = client.get(f"/unsubscribe/{str(subscription_fixture.id)}")
+    assert response.json() == {"status": "OK"}
+    assert response.status_code == 200
+
+    mock_client().send_sms_notification.assert_called_once_with(
+        phone_number="fixture_phone",
+        template_id="dae60d25-0c83-45b7-b2ba-db208281e4e4",
+        personalisation={"phone_number": "fixture_phone", "name": "fixture_name"},
+    )
+    mock_client().send_email_notification.assert_called_once_with(
+        email_address="fixture_email",
+        template_id="a6ea8854-3f45-4f5c-808f-61612d920eb3",
+        personalisation={"email_address": "fixture_email", "name": "fixture_name"},
+    )
+
+
+@patch("api_gateway.api.get_notify_client")
+def test_get_unsubscribe_event_with_correct_id_and_redirect(
+    mock_client, subscription_fixture_with_redirects, list_fixture_with_redirects
+):
+    response = client.get(
+        f"/unsubscribe/{str(subscription_fixture_with_redirects.id)}",
+        allow_redirects=False,
+    )
+    assert response.status_code == 307
+    assert response.headers == {
+        "location": list_fixture_with_redirects.unsubscribe_redirect_url
+    }
+
+
+@patch("api_gateway.api.db_session")
+@patch("api_gateway.api.get_notify_client")
+def test_get_unsubscribe_event_with_correct_id_unknown_error(
+    mock_client, mock_db_session, subscription_fixture
+):
+    mock_session = MagicMock()
+    mock_session.commit.side_effect = SQLAlchemyError()
+    mock_db_session.return_value = mock_session
+    response = client.get(f"/unsubscribe/{str(subscription_fixture.id)}")
+    assert response.json() == {"error": "error deleting subscription"}
+    assert response.status_code == 500
+
+
 def test_return_all_lists(list_fixture, list_fixture_with_redirects):
     response = client.get("/lists")
     assert response.json() == [
@@ -335,6 +396,7 @@ def test_create_list():
             "subscribe_phone_template_id": str(uuid.uuid4()),
             "unsubscribe_phone_template_id": str(uuid.uuid4()),
         },
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
     )
     assert response.json() == {"id": ANY}
     assert response.status_code == 200
@@ -353,6 +415,7 @@ def test_create_list_with_undeclared_parameter():
             "unsubscribe_phone_template_id": str(uuid.uuid4()),
             "foo": "bar",
         },
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
     )
     assert response.json() == {"detail": ANY}
     assert response.status_code == 422
@@ -370,6 +433,7 @@ def test_create_list_with_error():
             "subscribe_phone_template_id": "new_subscribe_phone_template_id",
             "unsubscribe_phone_template_id": "new_unsubscribe_phone_template_id",
         },
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
     )
     assert response.json() == {"detail": ANY}
     assert response.status_code == 422
@@ -396,6 +460,7 @@ def test_create_list_invalid_domain(field, value):
             "unsubscribe_phone_template_id": str(uuid.uuid4()),
             field: value,
         },
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
     )
     assert response.json() == {
         "detail": [
@@ -433,19 +498,26 @@ def test_create_list_valid_domain(field, value):
             "unsubscribe_phone_template_id": str(uuid.uuid4()),
             field: value,
         },
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
     )
     assert response.json() == {"id": ANY}
     assert response.status_code == 200
 
 
 def test_delete_list_with_bad_id():
-    response = client.delete("/list/foo")
+    response = client.delete(
+        "/list/foo",
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
+    )
     assert response.json() == {"error": "list not found"}
     assert response.status_code == 404
 
 
 def test_delete_list_with_id_not_found():
-    response = client.delete(f"/list/{str(uuid.uuid4())}")
+    response = client.delete(
+        f"/list/{str(uuid.uuid4())}",
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
+    )
     assert response.json() == {"error": "list not found"}
     assert response.status_code == 404
 
@@ -462,7 +534,10 @@ def test_delete_list_with_correct_id(session):
     )
     session.add(list)
     session.commit()
-    response = client.delete(f"/list/{str(list.id)}")
+    response = client.delete(
+        f"/list/{str(list.id)}",
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
+    )
     assert response.json() == {"status": "OK"}
     assert response.status_code == 200
 
@@ -472,8 +547,79 @@ def test_delete_list_with_correct_id_unknown_error(mock_db_session, list_fixture
     mock_session = MagicMock()
     mock_session.commit.side_effect = SQLAlchemyError()
     mock_db_session.return_value = mock_session
-    response = client.delete(f"/list/{str(list_fixture.id)}")
+    response = client.delete(
+        f"/list/{str(list_fixture.id)}",
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
+    )
     assert response.json() == {"error": "error deleting list"}
+    assert response.status_code == 500
+
+
+def test_edit_list_with_bad_id():
+    response = client.put(
+        "/list/foo",
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
+        json={"name": "name", "language": "language", "service_id": "service_id"},
+    )
+    assert response.json() == {"error": "list not found"}
+    assert response.status_code == 404
+
+
+def test_edit_list_with_id_not_found():
+    response = client.put(
+        f"/list/{str(uuid.uuid4())}",
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
+        json={"name": "name", "language": "language", "service_id": "service_id"},
+    )
+    assert response.json() == {"error": "list not found"}
+    assert response.status_code == 404
+
+
+def test_edit_list_with_correct_id(session):
+    list = List(
+        name="edit_name",
+        language="edit_language",
+        service_id="edit_service_id",
+        subscribe_email_template_id="edit_subscribe_email_template_id",
+        unsubscribe_email_template_id="edit_unsubscribe_email_template_id",
+        subscribe_phone_template_id="edit_subscribe_phone_template_id",
+        unsubscribe_phone_template_id="edit_unsubscribe_phone_template_id",
+    )
+    session.add(list)
+    session.commit()
+    response = client.put(
+        f"/list/{str(list.id)}",
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
+        json={
+            "name": "edited_name",
+            "language": "edited_language",
+            "service_id": "edited_service_id",
+        },
+    )
+    assert response.json() == {"status": "OK"}
+    assert response.status_code == 200
+    session.expire_all()
+    list = session.query(List).get(list.id)
+    assert list.name == "edited_name"
+    assert list.language == "edited_language"
+    assert list.service_id == "edited_service_id"
+
+
+@patch("api_gateway.api.db_session")
+def test_edit_list_with_correct_id_unknown_error(mock_db_session, list_fixture):
+    mock_session = MagicMock()
+    mock_session.commit.side_effect = SQLAlchemyError()
+    mock_db_session.return_value = mock_session
+    response = client.put(
+        f"/list/{str(list_fixture.id)}",
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
+        json={
+            "name": "edited_name",
+            "language": "edited_language",
+            "service_id": "edited_service_id",
+        },
+    )
+    assert response.json() == {"error": "error updating list"}
     assert response.status_code == 500
 
 
@@ -615,3 +761,20 @@ def test_metrics(mock_mangum, context_fixture, capsys):
     assert "SuccessfulUnsubscription" in str(
         metrics_output["_aws"]["CloudWatchMetrics"][0]["Metrics"]
     )
+
+
+@patch("api_gateway.api.metrics")
+def test_verify_token_throws_an_exception_if_token_is_not_correct(mock_metrics):
+    request = MagicMock()
+    request.headers = {"Authorization": "invalid"}
+    with pytest.raises(HTTPException):
+        assert api.verify_token(request)
+    mock_metrics.add_metric.assert_called_once_with(
+        name="IncorrectAuthorizationToken", unit=MetricUnit.Count, value=1
+    )
+
+
+def test_verify_token_returns_true_if_token_is_correct():
+    request = MagicMock()
+    request.headers = {"Authorization": os.environ["API_AUTH_TOKEN"]}
+    assert api.verify_token(request)
