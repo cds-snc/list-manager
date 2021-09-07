@@ -210,7 +210,7 @@ def create_subscription(
             subscription_payload.email is not None
             and len(list.subscribe_email_template_id) == 36
         ):
-            confirm_link=get_confirm_link(str(subscription.id))
+            confirm_link = get_confirm_link(str(subscription.id))
 
             notifications_client.send_email_notification(
                 email_address=subscription_payload.email,
@@ -219,7 +219,7 @@ def create_subscription(
                     "email_address": subscription_payload.email,
                     "name": list.name,
                     "subscription_id": str(subscription.id),
-                    "confirm_link": confirm_link
+                    "confirm_link": confirm_link,
                 },
             )
             metrics.add_metric(
@@ -426,11 +426,14 @@ def get_notify_client():
         NOTIFY_KEY, base_url="https://api.notification.canada.ca"
     )
 
+
 def get_confirm_link(subscription_id):
-    return get_base_url() + '/confirm/' + subscription_id
+    return get_base_url() + "/confirm/" + subscription_id
+
 
 def get_unsubscribe_link(subscription_id):
-    return get_base_url() + '/unsubscribe/' + subscription_id
+    return get_base_url() + "/unsubscribe/" + subscription_id
+
 
 def get_base_url():
-    return os.getenv('BASE_URL', 'https://list-manager.alpha.canada.ca')
+    return os.getenv("BASE_URL", "https://list-manager.alpha.canada.ca")

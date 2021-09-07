@@ -104,7 +104,7 @@ def test_create_succeeds_with_email(mock_client, list_fixture):
             "email_address": "test@example.com",
             "name": "fixture_name",
             "subscription_id": ANY,
-            "confirm_link": ANY
+            "confirm_link": ANY,
         },
     )
 
