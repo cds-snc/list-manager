@@ -23,6 +23,7 @@ METRICS_EMAIL_TARGET = "email"
 METRICS_SMS_TARGET = "sms"
 NOTIFY_KEY = environ.get("NOTIFY_KEY")
 REDIRECT_ALLOW_LIST = ["valid.canada.ca", "valid.gc.ca"]
+BASE_URL = environ.get("BASE_URL", "https://list-manager.alpha.canada.ca")
 
 app = FastAPI()
 metrics = Metrics(namespace="ListManager", service="api")
@@ -420,8 +421,13 @@ def send(
 ):
     try:
         q = session.query(
-            Subscription.email, Subscription.phone, Subscription.id
-        ).filter(Subscription.list_id == send_payload.list_id)
+            Subscription.email,
+            Subscription.phone,
+            Subscription.id,
+        ).filter(
+            Subscription.list_id == send_payload.list_id,
+            Subscription.confirmed.is_(True),
+        )
         subscription_count = q.count()
 
         if subscription_count == 0:
@@ -480,12 +486,8 @@ def get_notify_client():
 
 
 def get_confirm_link(subscription_id):
-    return get_base_url() + "/confirm/" + subscription_id
+    return f"{BASE_URL}/confirm/{subscription_id}"
 
 
 def get_unsubscribe_link(subscription_id):
-    return get_base_url() + "/unsubscribe/" + subscription_id
-
-
-def get_base_url():
-    return os.getenv("BASE_URL", "https://list-manager.alpha.canada.ca")
+    return f"{BASE_URL}/unsubscribe/{subscription_id}"

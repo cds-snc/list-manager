@@ -102,3 +102,13 @@ def subscription_fixture_with_redirects(session, list_fixture_with_redirects):
     session.add(subscription)
     session.commit()
     return subscription
+
+
+@pytest.fixture(scope="session")
+def subscription_fixture_confirmed(session, list_fixture):
+    subscription = Subscription(
+        email="fixture_email", phone="fixture_phone", list=list_fixture, confirmed=True
+    )
+    session.add(subscription)
+    session.commit()
+    return subscription

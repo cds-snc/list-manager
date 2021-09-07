@@ -633,7 +633,9 @@ def test_send_invalid_list(mock_client):
             "template_type": "email",
         },
     )
-    assert response.json() == {"error": "list not found"}
+    data = response.json()
+    assert "error" in data
+    assert "not found" in data["error"]
     assert response.status_code == 404
 
 
@@ -649,7 +651,9 @@ def test_send_email(mock_client, list_fixture):
             "job_name": "Job Name",
         },
     )
-    assert response.json()["status"] == "OK"
+    data = response.json()
+    assert data["status"] == "OK"
+    assert data["sent"] == 1
     assert response.status_code == 200
 
     mock_client().send_bulk_notifications.assert_called_once()
