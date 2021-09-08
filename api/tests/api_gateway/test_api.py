@@ -116,7 +116,11 @@ def test_create_succeeds_with_phone(mock_client, list_fixture):
     mock_client().send_sms_notification.assert_called_once_with(
         phone_number="123456789",
         template_id="02427c7f-d041-411d-9b92-5890cade3d9a",
-        personalisation={"name": "fixture_name", "subscription_id": ANY},
+        personalisation={
+            "name": "fixture_name",
+            "subscription_id": ANY,
+            "confirm_link": ANY,
+        },
     )
 
 
