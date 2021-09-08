@@ -191,19 +191,19 @@ def test_create_succeeds_with_email_and_phone_unknown_error(
 
 
 def test_confirm_with_bad_id():
-    response = client.get("/subscription/foo")
+    response = client.get("/subscription/foo/confirm")
     assert response.json() == {"error": "subscription not found"}
     assert response.status_code == 404
 
 
 def test_confirm_with_id_not_found():
-    response = client.get(f"/subscription/{str(uuid.uuid4())}")
+    response = client.get(f"/subscription/{str(uuid.uuid4())}/confirm")
     assert response.json() == {"error": "subscription not found"}
     assert response.status_code == 404
 
 
 def test_confirm_with_correct_id(session, subscription_fixture):
-    response = client.get(f"/subscription/{str(subscription_fixture.id)}")
+    response = client.get(f"/subscription/{str(subscription_fixture.id)}/confirm")
     assert response.json() == {"status": "OK"}
     assert response.status_code == 200
     session.refresh(subscription_fixture)
@@ -214,7 +214,7 @@ def test_confirm_with_correct_id_and_redirects(
     session, subscription_fixture_with_redirects, list_fixture_with_redirects
 ):
     response = client.get(
-        f"/subscription/{str(subscription_fixture_with_redirects.id)}",
+        f"/subscription/{str(subscription_fixture_with_redirects.id)}/confirm",
         allow_redirects=False,
     )
     assert response.status_code == 307
@@ -230,7 +230,7 @@ def test_confirm_with_correct_id_unknown_error(mock_db_session, subscription_fix
     mock_session = MagicMock()
     mock_session.commit.side_effect = SQLAlchemyError()
     mock_db_session.return_value = mock_session
-    response = client.get(f"/subscription/{str(subscription_fixture.id)}")
+    response = client.get(f"/subscription/{str(subscription_fixture.id)}/confirm")
     assert response.json() == {"error": "error confirming subscription"}
     assert response.status_code == 500
 

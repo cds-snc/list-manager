@@ -314,8 +314,8 @@ def create_subscription(
         return {"error": "error saving subscription"}
 
 
-@app.get("/subscription/{subscription_id}")
-def confirm(subscription_id, response: Response, session: Session = Depends(get_db)):
+@app.get("/subscription/{subscription_id}/confirm")
+def confirm_subscription(subscription_id, response: Response, session: Session = Depends(get_db)):
     try:
         subscription = session.query(Subscription).get(subscription_id)
         if subscription is None:
@@ -484,7 +484,7 @@ def get_notify_client():
 
 
 def get_confirm_link(subscription_id):
-    return f"{BASE_URL}/confirm/{subscription_id}"
+    return f"{BASE_URL}/subscription/{subscription_id}/confirm"
 
 
 def get_unsubscribe_link(subscription_id):
