@@ -264,7 +264,6 @@ def create_subscription(
                 email_address=subscription_payload.email,
                 template_id=list.subscribe_email_template_id,
                 personalisation={
-                    "email_address": subscription_payload.email,
                     "name": list.name,
                     "subscription_id": str(subscription.id),
                 },
@@ -284,8 +283,8 @@ def create_subscription(
                 phone_number=subscription_payload.phone,
                 template_id=list.subscribe_phone_template_id,
                 personalisation={
-                    "phone_number": subscription_payload.phone,
                     "name": list.name,
+                    "subscription_id": str(subscription.id),
                 },
             )
             metrics.add_metric(
