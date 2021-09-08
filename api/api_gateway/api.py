@@ -315,7 +315,9 @@ def create_subscription(
 
 
 @app.get("/subscription/{subscription_id}/confirm")
-def confirm_subscription(subscription_id, response: Response, session: Session = Depends(get_db)):
+def confirm_subscription(
+    subscription_id, response: Response, session: Session = Depends(get_db)
+):
     try:
         subscription = session.query(Subscription).get(subscription_id)
         if subscription is None:
