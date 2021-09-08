@@ -22,6 +22,7 @@ METRICS_EMAIL_TARGET = "email"
 METRICS_SMS_TARGET = "sms"
 NOTIFY_KEY = environ.get("NOTIFY_KEY")
 REDIRECT_ALLOW_LIST = ["valid.canada.ca", "valid.gc.ca"]
+BASE_URL = environ.get("BASE_URL", "https://list-manager.alpha.canada.ca")
 
 app = FastAPI()
 metrics = Metrics(namespace="ListManager", service="api")
@@ -260,12 +261,15 @@ def create_subscription(
             subscription_payload.email is not None
             and len(list.subscribe_email_template_id) == 36
         ):
+            confirm_link = get_confirm_link(str(subscription.id))
+
             notifications_client.send_email_notification(
                 email_address=subscription_payload.email,
                 template_id=list.subscribe_email_template_id,
                 personalisation={
                     "name": list.name,
                     "subscription_id": str(subscription.id),
+                    "confirm_link": confirm_link,
                 },
             )
             metrics.add_metric(
@@ -309,8 +313,10 @@ def create_subscription(
         return {"error": "error saving subscription"}
 
 
-@app.get("/subscription/{subscription_id}")
-def confirm(subscription_id, response: Response, session: Session = Depends(get_db)):
+@app.get("/subscription/{subscription_id}/confirm")
+def confirm_subscription(
+    subscription_id, response: Response, session: Session = Depends(get_db)
+):
     try:
         subscription = session.query(Subscription).get(subscription_id)
         if subscription is None:
@@ -329,9 +335,8 @@ def confirm(subscription_id, response: Response, session: Session = Depends(get_
         )
         metrics.add_metadata(key="subscription_id", value=str(subscription_id))
 
-        list = session.query(List).get(subscription.list_id)
-        if list.confirm_redirect_url is not None:
-            return RedirectResponse(list.confirm_redirect_url)
+        if subscription.list.confirm_redirect_url is not None:
+            return RedirectResponse(subscription.list.confirm_redirect_url)
         else:
             return {"status": "OK"}
 
@@ -415,8 +420,13 @@ def send(
 ):
     try:
         q = session.query(
-            Subscription.email, Subscription.phone, Subscription.id
-        ).filter(Subscription.list_id == send_payload.list_id)
+            Subscription.email,
+            Subscription.phone,
+            Subscription.id,
+        ).filter(
+            Subscription.list_id == send_payload.list_id,
+            Subscription.confirmed.is_(True),
+        )
         subscription_count = q.count()
 
         if subscription_count == 0:
@@ -472,3 +482,11 @@ def get_notify_client():
     return NotificationsAPIClient(
         NOTIFY_KEY, base_url="https://api.notification.canada.ca"
     )
+
+
+def get_confirm_link(subscription_id):
+    return f"{BASE_URL}/subscription/{subscription_id}/confirm"
+
+
+def get_unsubscribe_link(subscription_id):
+    return f"{BASE_URL}/unsubscribe/{subscription_id}"

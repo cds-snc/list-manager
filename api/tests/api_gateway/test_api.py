@@ -102,7 +102,11 @@ def test_create_succeeds_with_email(mock_client, list_fixture):
     mock_client().send_email_notification.assert_called_once_with(
         email_address="test@example.com",
         template_id="97375f47-0fb1-4459-ab36-97a5c1ba358f",
-        personalisation={"name": "fixture_name", "subscription_id": ANY},
+        personalisation={
+            "name": "fixture_name",
+            "subscription_id": ANY,
+            "confirm_link": ANY,
+        },
     )
 
 
@@ -186,19 +190,19 @@ def test_create_succeeds_with_email_and_phone_unknown_error(
 
 
 def test_confirm_with_bad_id():
-    response = client.get("/subscription/foo")
+    response = client.get("/subscription/foo/confirm")
     assert response.json() == {"error": "subscription not found"}
     assert response.status_code == 404
 
 
 def test_confirm_with_id_not_found():
-    response = client.get(f"/subscription/{str(uuid.uuid4())}")
+    response = client.get(f"/subscription/{str(uuid.uuid4())}/confirm")
     assert response.json() == {"error": "subscription not found"}
     assert response.status_code == 404
 
 
 def test_confirm_with_correct_id(session, subscription_fixture):
-    response = client.get(f"/subscription/{str(subscription_fixture.id)}")
+    response = client.get(f"/subscription/{str(subscription_fixture.id)}/confirm")
     assert response.json() == {"status": "OK"}
     assert response.status_code == 200
     session.refresh(subscription_fixture)
@@ -209,7 +213,7 @@ def test_confirm_with_correct_id_and_redirects(
     session, subscription_fixture_with_redirects, list_fixture_with_redirects
 ):
     response = client.get(
-        f"/subscription/{str(subscription_fixture_with_redirects.id)}",
+        f"/subscription/{str(subscription_fixture_with_redirects.id)}/confirm",
         allow_redirects=False,
     )
     assert response.status_code == 307
@@ -225,7 +229,7 @@ def test_confirm_with_correct_id_unknown_error(mock_db_session, subscription_fix
     mock_session = MagicMock()
     mock_session.commit.side_effect = SQLAlchemyError()
     mock_db_session.return_value = mock_session
-    response = client.get(f"/subscription/{str(subscription_fixture.id)}")
+    response = client.get(f"/subscription/{str(subscription_fixture.id)}/confirm")
     assert response.json() == {"error": "error confirming subscription"}
     assert response.status_code == 500
 
@@ -258,7 +262,10 @@ def test_unsubscribe_event_with_correct_id(mock_client, subscription_fixture):
     mock_client().send_email_notification.assert_called_once_with(
         email_address="fixture_email",
         template_id="a6ea8854-3f45-4f5c-808f-61612d920eb3",
-        personalisation={"email_address": "fixture_email", "name": "fixture_name"},
+        personalisation={
+            "email_address": "fixture_email",
+            "name": "fixture_name",
+        },
     )
 
 
@@ -316,7 +323,10 @@ def test_get_unsubscribe_event_with_correct_id(mock_client, subscription_fixture
     mock_client().send_email_notification.assert_called_once_with(
         email_address="fixture_email",
         template_id="a6ea8854-3f45-4f5c-808f-61612d920eb3",
-        personalisation={"email_address": "fixture_email", "name": "fixture_name"},
+        personalisation={
+            "email_address": "fixture_email",
+            "name": "fixture_name",
+        },
     )
 
 
@@ -628,7 +638,9 @@ def test_send_invalid_list(mock_client):
             "template_type": "email",
         },
     )
-    assert response.json() == {"error": "list not found"}
+    data = response.json()
+    assert "error" in data
+    assert "not found" in data["error"]
     assert response.status_code == 404
 
 
@@ -644,7 +656,9 @@ def test_send_email(mock_client, list_fixture):
             "job_name": "Job Name",
         },
     )
-    assert response.json()["status"] == "OK"
+    data = response.json()
+    assert data["status"] == "OK"
+    assert data["sent"] == 1
     assert response.status_code == 200
 
     mock_client().send_bulk_notifications.assert_called_once()
