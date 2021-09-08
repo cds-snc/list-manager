@@ -102,10 +102,7 @@ def test_create_succeeds_with_email(mock_client, list_fixture):
     mock_client().send_email_notification.assert_called_once_with(
         email_address="test@example.com",
         template_id="97375f47-0fb1-4459-ab36-97a5c1ba358f",
-        personalisation={
-            "name": "fixture_name",
-            "subscription_id": ANY
-        },
+        personalisation={"name": "fixture_name", "subscription_id": ANY},
     )
 
 
