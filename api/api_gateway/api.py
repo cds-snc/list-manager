@@ -334,9 +334,8 @@ def confirm(subscription_id, response: Response, session: Session = Depends(get_
         )
         metrics.add_metadata(key="subscription_id", value=str(subscription_id))
 
-        list = session.query(List).get(subscription.list_id)
-        if list.confirm_redirect_url is not None:
-            return RedirectResponse(list.confirm_redirect_url)
+        if subscription.list.confirm_redirect_url is not None:
+            return RedirectResponse(subscription.list.confirm_redirect_url)
         else:
             return {"status": "OK"}
 
