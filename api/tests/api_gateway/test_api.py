@@ -102,7 +102,11 @@ def test_create_succeeds_with_email(mock_client, list_fixture):
     mock_client().send_email_notification.assert_called_once_with(
         email_address="test@example.com",
         template_id="97375f47-0fb1-4459-ab36-97a5c1ba358f",
-        personalisation={"name": "fixture_name", "subscription_id": ANY},
+        personalisation={
+            "name": "fixture_name",
+            "subscription_id": ANY,
+            "confirm_link": ANY,
+        },
     )
 
 
@@ -116,11 +120,7 @@ def test_create_succeeds_with_phone(mock_client, list_fixture):
     mock_client().send_sms_notification.assert_called_once_with(
         phone_number="123456789",
         template_id="02427c7f-d041-411d-9b92-5890cade3d9a",
-        personalisation={
-            "name": "fixture_name",
-            "subscription_id": ANY,
-            "confirm_link": ANY,
-        },
+        personalisation={"name": "fixture_name", "subscription_id": ANY},
     )
 
 
@@ -262,7 +262,10 @@ def test_unsubscribe_event_with_correct_id(mock_client, subscription_fixture):
     mock_client().send_email_notification.assert_called_once_with(
         email_address="fixture_email",
         template_id="a6ea8854-3f45-4f5c-808f-61612d920eb3",
-        personalisation={"email_address": "fixture_email", "name": "fixture_name"},
+        personalisation={
+            "email_address": "fixture_email",
+            "name": "fixture_name",
+        },
     )
 
 
@@ -320,7 +323,10 @@ def test_get_unsubscribe_event_with_correct_id(mock_client, subscription_fixture
     mock_client().send_email_notification.assert_called_once_with(
         email_address="fixture_email",
         template_id="a6ea8854-3f45-4f5c-808f-61612d920eb3",
-        personalisation={"email_address": "fixture_email", "name": "fixture_name"},
+        personalisation={
+            "email_address": "fixture_email",
+            "name": "fixture_name",
+        },
     )
 
 
