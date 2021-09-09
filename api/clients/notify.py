@@ -25,5 +25,5 @@ class NotificationsAPIClient(BaseNotify):
         return self.post("/v2/notifications/bulk", data=notification)
 
     def _perform_request(self, method, url, kwargs):
-        kwargs["timeout"] = 3
+        kwargs["timeout"] = 30
         return super()._perform_request(method, url, kwargs)
