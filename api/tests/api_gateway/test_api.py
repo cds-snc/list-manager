@@ -11,6 +11,7 @@ from unittest.mock import ANY, MagicMock, patch
 
 from api_gateway import api
 from sqlalchemy.exc import SQLAlchemyError
+from requests import HTTPError
 
 from models.List import List
 
@@ -189,6 +190,26 @@ def test_create_succeeds_with_email_and_phone_unknown_error(
     assert response.status_code == 500
 
 
+@patch("api_gateway.api.db_session")
+@patch("api_gateway.api.get_notify_client")
+def test_create_succeeds_with_email_and_phone_notify_error(
+    mock_client, mock_db_session, list_fixture
+):
+    mock_session = MagicMock()
+    mock_session.commit.side_effect = HTTPError()
+    mock_db_session.return_value = mock_session
+    response = client.post(
+        "/subscription",
+        json={
+            "email": "test@example.com",
+            "phone": "123456789",
+            "list_id": str(list_fixture.id),
+        },
+    )
+    assert response.json() == {"error": "error sending subscription notification"}
+    assert response.status_code == 502
+
+
 def test_confirm_with_bad_id():
     response = client.get("/subscription/foo/confirm")
     assert response.json() == {"error": "subscription not found"}
@@ -357,6 +378,19 @@ def test_get_unsubscribe_event_with_correct_id_unknown_error(
     assert response.status_code == 500
 
 
+@patch("api_gateway.api.db_session")
+@patch("api_gateway.api.get_notify_client")
+def test_get_unsubscribe_event_with_correct_id_notify_error(
+    mock_client, mock_db_session, subscription_fixture
+):
+    mock_session = MagicMock()
+    mock_session.commit.side_effect = HTTPError()
+    mock_db_session.return_value = mock_session
+    response = client.get(f"/unsubscribe/{str(subscription_fixture.id)}")
+    assert response.json() == {"error": "error sending unsubscription notification"}
+    assert response.status_code == 502
+
+
 def test_return_all_lists(list_fixture, list_fixture_with_redirects):
     response = client.get("/lists")
     assert response.json() == [
@@ -442,6 +476,28 @@ def test_create_list_with_error():
     )
     assert response.json() == {"detail": ANY}
     assert response.status_code == 422
+
+
+@patch("api_gateway.api.db_session")
+def test_create_list_with_unknown_error(mock_db_session):
+    mock_session = MagicMock()
+    mock_session.commit.side_effect = SQLAlchemyError("fakeerror")
+    mock_db_session.return_value = mock_session
+    response = client.post(
+        "/list",
+        json={
+            "name": "new_name",
+            "language": "new_language",
+            "service_id": "new_service_id",
+            "subscribe_email_template_id": str(uuid.uuid4()),
+            "unsubscribe_email_template_id": str(uuid.uuid4()),
+            "subscribe_phone_template_id": str(uuid.uuid4()),
+            "unsubscribe_phone_template_id": str(uuid.uuid4()),
+        },
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
+    )
+    assert response.json() == {"error": "error saving list: fakeerror"}
+    assert response.status_code == 500
 
 
 @pytest.mark.parametrize(
@@ -761,7 +817,7 @@ def test_metrics(mock_mangum, context_fixture, capsys):
     assert "SuccessfulSubscription" in str(
         metrics_output["_aws"]["CloudWatchMetrics"][0]["Metrics"]
     )
-    assert "UnsuccessfulSubscription" in str(
+    assert "UnsubscriptionError" in str(
         metrics_output["_aws"]["CloudWatchMetrics"][0]["Metrics"]
     )
     assert "SuccessfulConfirmation" in str(
