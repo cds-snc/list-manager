@@ -700,6 +700,23 @@ def test_send_invalid_list(mock_client):
     assert response.status_code == 404
 
 
+@patch("api_gateway.api.db_session")
+@patch("api_gateway.api.get_notify_client")
+def test_send_notify_error(mock_client, mock_db_session):
+
+    mock_client.side_effect = HTTPError()
+    response = client.post(
+        "/send",
+        json={
+            "list_id": str(uuid.uuid4()),
+            "template_id": str(uuid.uuid4()),
+            "template_type": "email",
+        },
+    )
+    assert response.json() == {"error": "error sending bulk notifications"}
+    assert response.status_code == 502
+
+
 @patch("api_gateway.api.get_notify_client")
 def test_send_email(mock_client, list_fixture):
     template_id = str(uuid.uuid4())
@@ -808,24 +825,25 @@ def test_metrics(mock_mangum, context_fixture, capsys):
 
     metrics_output = json.loads(log)
 
-    assert "ListCreated" in str(
-        metrics_output["_aws"]["CloudWatchMetrics"][0]["Metrics"]
-    )
-    assert "ListDeleted" in str(
-        metrics_output["_aws"]["CloudWatchMetrics"][0]["Metrics"]
-    )
-    assert "SuccessfulSubscription" in str(
-        metrics_output["_aws"]["CloudWatchMetrics"][0]["Metrics"]
-    )
-    assert "UnsubscriptionError" in str(
-        metrics_output["_aws"]["CloudWatchMetrics"][0]["Metrics"]
-    )
-    assert "SuccessfulConfirmation" in str(
-        metrics_output["_aws"]["CloudWatchMetrics"][0]["Metrics"]
-    )
-    assert "SuccessfulUnsubscription" in str(
-        metrics_output["_aws"]["CloudWatchMetrics"][0]["Metrics"]
-    )
+    metric_list = [
+        "ListCreated",
+        "ListDeleted",
+        "SuccessfulSubscription",
+        "UnsubscriptionError",
+        "ConfirmationError",
+        "UnsubscriptionNotificationError",
+        "SuccessfulConfirmation",
+        "SuccessfulUnsubscription",
+        "BulkNotificationError",
+        "SubscriptionNotificationError",
+        "ListDeleteError",
+        "ListUpdateError",
+        "ListUpdated",
+        "ListCreateError",
+    ]
+
+    for metric in metric_list:
+        assert metric in str(metrics_output["_aws"]["CloudWatchMetrics"][0]["Metrics"])
 
 
 @patch("api_gateway.api.metrics")
