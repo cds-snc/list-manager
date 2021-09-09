@@ -23,3 +23,7 @@ class NotificationsAPIClient(BaseNotify):
         if email_reply_to_id:
             notification.update({"reply_to_id": email_reply_to_id})
         return self.post("/v2/notifications/bulk", data=notification)
+
+    def _perform_request(self, method, url, kwargs):
+        kwargs["timeout"] = 3
+        return super(NotificationsAPIClient, self)._perform_request(method, url, kwargs)
