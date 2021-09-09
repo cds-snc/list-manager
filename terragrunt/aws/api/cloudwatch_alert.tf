@@ -9,7 +9,7 @@ resource "aws_cloudwatch_metric_alarm" "logs-1-500-error-1-minute-warning" {
   statistic           = "Sum"
   threshold           = 1
   treat_missing_data  = "notBreaching"
-  alarm_actions       = [aws_sns_topic.warning]
+  alarm_actions       = [aws_sns_topic.warning.arn]
 }
 
 resource "aws_cloudwatch_metric_alarm" "logs-10-500-error-5-minutes-critical" {
@@ -23,8 +23,8 @@ resource "aws_cloudwatch_metric_alarm" "logs-10-500-error-5-minutes-critical" {
   statistic           = "Sum"
   threshold           = 10
   treat_missing_data  = "notBreaching"
-  alarm_actions       = [aws_sns_topic.critical]
-  ok_actions          = [aws_sns_topic.critical]
+  alarm_actions       = [aws_sns_topic.critical.arn]
+  ok_actions          = [aws_sns_topic.critical.arn]
 }
 
 resource "aws_cloudwatch_metric_alarm" "logs-1-429-error-1-minute-warning" {
