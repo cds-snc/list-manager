@@ -2,6 +2,7 @@ from os import environ
 from fastapi import Depends, FastAPI, HTTPException, Response, Request, status
 from fastapi.responses import RedirectResponse
 from clients.notify import NotificationsAPIClient
+from requests import HTTPError
 from sqlalchemy.exc import SQLAlchemyError, NoResultFound
 from sqlalchemy.sql.expression import func, cast
 from sqlalchemy.orm import Session
@@ -155,11 +156,12 @@ def create_list(
 
         metrics.add_metric(name="ListCreated", unit=MetricUnit.Count, value=1)
         metrics.add_metadata(key="list_id", value=str(list.id))
-
         return {"id": list.id}
     except SQLAlchemyError as err:
         log.error(err)
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        metrics.add_metric(name="ListCreateError", unit=MetricUnit.Count, value=1)
+        metrics.add_metadata(key="list_id", value=list_payload.name)
         return {"error": f"error saving list: {err}"}
 
 
@@ -192,6 +194,8 @@ def update_list(
     except SQLAlchemyError as err:
         log.error(err)
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        metrics.add_metric(name="ListUpdateError", unit=MetricUnit.Count, value=1)
+        metrics.add_metadata(key="list_id", value=str(list_id))
         return {"error": "error updating list"}
 
 
@@ -220,6 +224,9 @@ def delete_list(
     except SQLAlchemyError as err:
         log.error(err)
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        metrics.add_metric(name="ListDeleteError", unit=MetricUnit.Count, value=1)
+        metrics.add_metadata(key="list_id", value=str(list_id))
+
         return {"error": "error deleting list"}
 
 
@@ -307,12 +314,19 @@ def create_subscription(
     except SQLAlchemyError as err:
         log.error(err)
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        metrics.add_metric(
-            name="UnsuccessfulSubscription", unit=MetricUnit.Count, value=1
-        )
+        metrics.add_metric(name="SubscriptionSaveError", unit=MetricUnit.Count, value=1)
         metrics.add_metadata(key="list_id", value=str(subscription_payload.list_id))
 
         return {"error": "error saving subscription"}
+    except HTTPError as err:
+        log.error(err)
+        response.status_code = status.HTTP_502_BAD_GATEWAY
+        metrics.add_metric(
+            name="SubscriptionNotificationError", unit=MetricUnit.Count, value=1
+        )
+        metrics.add_metadata(key="list_id", value=str(subscription_payload.list_id))
+
+        return {"error": "error sending subscription notification"}
 
 
 @app.get("/subscription/{subscription_id}/confirm")
@@ -345,6 +359,8 @@ def confirm_subscription(
     except SQLAlchemyError as err:
         log.error(err)
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        metrics.add_metric(name="ConfirmationError", unit=MetricUnit.Count, value=1)
+        metrics.add_metadata(key="subscription_id", value=str(subscription_id))
         return {"error": "error confirming subscription"}
 
 
@@ -363,9 +379,9 @@ def unsubscribe(
         response.status_code = status.HTTP_404_NOT_FOUND
         return {"error": "subscription not found"}
 
-    list = session.query(List).get(subscription.list_id)
-
     try:
+        list = session.query(List).get(subscription.list_id)
+
         email = subscription.email
         phone = subscription.phone
         session.delete(subscription)
@@ -397,7 +413,20 @@ def unsubscribe(
     except SQLAlchemyError as err:
         log.error(err)
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+
+        metrics.add_metric(name="UnsubscriptionError", unit=MetricUnit.Count, value=1)
+        metrics.add_metadata(key="subscription_id", value=str(subscription_id))
+
         return {"error": "error deleting subscription"}
+    except HTTPError as err:
+        log.error(err)
+        response.status_code = status.HTTP_502_BAD_GATEWAY
+        metrics.add_metric(
+            name="UnsubscriptionNotificationError", unit=MetricUnit.Count, value=1
+        )
+        metrics.add_metadata(key="subscription_id", value=str(subscription_id))
+
+        return {"error": "error sending unsubscription notification"}
 
 
 class SendPayload(BaseModel):
@@ -449,7 +478,17 @@ def send(
         response.status_code = status.HTTP_404_NOT_FOUND
         return {"error": "list not found"}
 
-    sent_notifications = send_bulk_notify(subscription_count, send_payload, rs)
+    try:
+        sent_notifications = send_bulk_notify(subscription_count, send_payload, rs)
+
+    except HTTPError as err:
+        log.error(err)
+        response.status_code = status.HTTP_502_BAD_GATEWAY
+        metrics.add_metric(name="BulkNotificationError", unit=MetricUnit.Count, value=1)
+        metrics.add_metadata(key="subscription_count", value=str(subscription_count))
+
+        return {"error": "error sending bulk notifications"}
+
     return {"status": "OK", "sent": sent_notifications}
 
 
