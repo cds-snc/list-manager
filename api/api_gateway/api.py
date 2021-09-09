@@ -476,7 +476,7 @@ def send(
         rs = q.all()
     except SQLAlchemyError:
         response.status_code = status.HTTP_404_NOT_FOUND
-        return {"error": "list not found"}
+        return {"error": "list with confirmed subscribers not found"}
 
     try:
         sent_notifications = send_bulk_notify(subscription_count, send_payload, rs)
