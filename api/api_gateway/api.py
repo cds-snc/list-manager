@@ -3,7 +3,9 @@ from fastapi import Depends, FastAPI, HTTPException, Response, Request, status
 from fastapi.responses import RedirectResponse
 from clients.notify import NotificationsAPIClient
 from sqlalchemy.exc import SQLAlchemyError, NoResultFound
+from sqlalchemy.sql.expression import func, cast
 from sqlalchemy.orm import Session
+from sqlalchemy import String
 from database.db import db_session
 from logger import log
 from uuid import UUID, uuid4
@@ -403,6 +405,7 @@ class SendPayload(BaseModel):
     template_id: UUID
     template_type: str
     job_name: Optional[str] = "Bulk email"
+    unique: Optional[bool] = True
 
     @validator("template_type")
     def template_type_email_or_phone(cls, v):
@@ -419,14 +422,23 @@ def send(
     send_payload: SendPayload, response: Response, session: Session = Depends(get_db)
 ):
     try:
-        q = session.query(
-            Subscription.email,
-            Subscription.phone,
-            Subscription.id,
-        ).filter(
+        template_type = send_payload.template_type
+        cols = [getattr(Subscription, template_type)]
+        if send_payload.unique:
+            cols.append(func.max(cast(Subscription.id, String)).label("id"))
+        else:
+            cols.append(Subscription.id)
+
+        q = session.query(*cols)
+
+        if send_payload.unique:
+            q = q.group_by(template_type)
+
+        q = q.filter(
             Subscription.list_id == send_payload.list_id,
             Subscription.confirmed.is_(True),
         )
+
         subscription_count = q.count()
 
         if subscription_count == 0:
@@ -438,7 +450,6 @@ def send(
         return {"error": "list not found"}
 
     sent_notifications = send_bulk_notify(subscription_count, send_payload, rs)
-
     return {"status": "OK", "sent": sent_notifications}
 
 

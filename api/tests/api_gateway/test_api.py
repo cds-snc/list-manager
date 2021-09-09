@@ -740,6 +740,73 @@ def test_send_sms_only(mock_client):
     assert emails_sent == 1
 
 
+@patch("api_gateway.api.get_notify_client")
+def test_send_duplicate_emails(mock_client, list_fixture_with_duplicates):
+    template_id = str(uuid.uuid4())
+    response = client.post(
+        "/send",
+        json={
+            "list_id": str(list_fixture_with_duplicates.id),
+            "template_id": template_id,
+            "template_type": "email",
+            "job_name": "Job Name",
+        },
+    )
+    data = response.json()
+
+    assert data["status"] == "OK"
+    assert data["sent"] == 2
+
+    response = client.post(
+        "/send",
+        json={
+            "list_id": str(list_fixture_with_duplicates.id),
+            "template_id": template_id,
+            "template_type": "email",
+            "job_name": "Job Name",
+            "unique": False,
+        },
+    )
+    data = response.json()
+
+    assert data["status"] == "OK"
+    assert data["sent"] == 4
+
+
+@patch("api_gateway.api.get_notify_client")
+def test_send_duplicate_phones(mock_client, list_fixture_with_duplicates):
+    template_id = str(uuid.uuid4())
+    response = client.post(
+        "/send",
+        json={
+            "list_id": str(list_fixture_with_duplicates.id),
+            "template_id": template_id,
+            "template_type": "phone",
+            "job_name": "Job Name",
+        },
+    )
+    data = response.json()
+
+    assert data["status"] == "OK"
+    assert data["sent"] == 2
+
+    template_id = str(uuid.uuid4())
+    response = client.post(
+        "/send",
+        json={
+            "list_id": str(list_fixture_with_duplicates.id),
+            "template_id": template_id,
+            "template_type": "phone",
+            "job_name": "Job Name",
+            "unique": False,
+        },
+    )
+    data = response.json()
+    print(data)
+    assert data["status"] == "OK"
+    assert data["sent"] == 3
+
+
 @patch("main.Mangum")
 def test_metrics(mock_mangum, context_fixture, capsys):
 
