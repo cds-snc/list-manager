@@ -26,4 +26,4 @@ class NotificationsAPIClient(BaseNotify):
 
     def _perform_request(self, method, url, kwargs):
         kwargs["timeout"] = 3
-        return super(NotificationsAPIClient, self)._perform_request(method, url, kwargs)
+        return super()._perform_request(method, url, kwargs)
