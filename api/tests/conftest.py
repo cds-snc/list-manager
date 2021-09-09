@@ -102,3 +102,47 @@ def subscription_fixture_with_redirects(session, list_fixture_with_redirects):
     session.add(subscription)
     session.commit()
     return subscription
+
+
+@pytest.fixture(scope="session")
+def list_fixture_with_duplicates(session):
+    list_fixture = List(
+        name="fixture_name_duplicates",
+        language="fixture_language",
+        service_id="fixture_service_id",
+        subscribe_email_template_id="97375f47-0fb1-4459-ab36-97a5c1ba358f",
+        unsubscribe_email_template_id="a6ea8854-3f45-4f5c-808f-61612d920eb3",
+        subscribe_phone_template_id="02427c7f-d041-411d-9b92-5890cade3d9a",
+        unsubscribe_phone_template_id="dae60d25-0c83-45b7-b2ba-db208281e4e4",
+    )
+    session.add(list_fixture)
+    subscription = Subscription(
+        email="fixture_email", phone="fixture_phone", list=list_fixture, confirmed=True
+    )
+    session.add(subscription)
+
+    subscription2 = Subscription(
+        email="fixture_email", list=list_fixture, confirmed=True
+    )
+    session.add(subscription2)
+
+    subscription3 = Subscription(
+        email="fixture_email_unique", list=list_fixture, confirmed=True
+    )
+    session.add(subscription3)
+
+    subscription4 = Subscription(
+        email="fixture_email_unique",
+        phone="fixture_phone_unique",
+        list=list_fixture,
+        confirmed=True,
+    )
+    session.add(subscription4)
+
+    subscription5 = Subscription(
+        phone="fixture_phone", list=list_fixture, confirmed=True
+    )
+    session.add(subscription5)
+
+    session.commit()
+    return list_fixture
