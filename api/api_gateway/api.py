@@ -24,7 +24,7 @@ API_AUTH_TOKEN = environ.get("API_AUTH_TOKEN", uuid4())
 METRICS_EMAIL_TARGET = "email"
 METRICS_SMS_TARGET = "sms"
 NOTIFY_KEY = environ.get("NOTIFY_KEY")
-REDIRECT_ALLOW_LIST = ["valid.canada.ca", "valid.gc.ca"]
+REDIRECT_ALLOW_LIST = ["valid.canada.ca", "valid.gc.ca", "ircc.digital.canada.ca", "ircc.numerique.canada.ca"]
 BASE_URL = environ.get("BASE_URL", "https://list-manager.alpha.canada.ca")
 
 app = FastAPI()
