@@ -277,7 +277,6 @@ def create_subscription(
                 template_id=list.subscribe_email_template_id,
                 personalisation={
                     "name": list.name,
-                    "subscription_id": str(subscription.id),
                     "confirm_link": confirm_link,
                 },
             )
@@ -297,7 +296,6 @@ def create_subscription(
                 template_id=list.subscribe_phone_template_id,
                 personalisation={
                     "name": list.name,
-                    "subscription_id": str(subscription.id),
                 },
             )
             metrics.add_metric(
