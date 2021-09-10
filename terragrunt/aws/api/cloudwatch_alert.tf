@@ -9,7 +9,6 @@ resource "aws_cloudwatch_metric_alarm" "logs-1-5XX-error-1-minute-warning" {
   statistic           = "Sum"
   threshold           = 1
   treat_missing_data  = "notBreaching"
-  alarm_description   = "This metric monitors 5XX errors in the metrics API gateway"
   alarm_actions       = [aws_sns_topic.warning.arn]
   ok_actions          = [aws_sns_topic.warning.arn]
   dimensions = {
@@ -28,7 +27,6 @@ resource "aws_cloudwatch_metric_alarm" "logs-10-5XX-error-5-minutes-critical" {
   statistic           = "Sum"
   threshold           = 10
   treat_missing_data  = "notBreaching"
-  alarm_description   = "This metric monitors 5XX errors in the metrics API gateway"
   alarm_actions       = [aws_sns_topic.critical.arn]
   ok_actions          = [aws_sns_topic.critical.arn]
   dimensions = {
@@ -47,7 +45,6 @@ resource "aws_cloudwatch_metric_alarm" "logs-1-4xx-error-1-minute-warning" {
   statistic           = "Sum"
   threshold           = 1
   treat_missing_data  = "notBreaching"
-  alarm_description   = "This metric monitors 4XX errors in the metrics API gateway"
   alarm_actions       = [aws_sns_topic.warning.arn]
   ok_actions          = [aws_sns_topic.warning.arn]
   dimensions = {
@@ -66,7 +63,6 @@ resource "aws_cloudwatch_metric_alarm" "logs-10-4xx-error-5-minutes-critical" {
   statistic           = "Sum"
   threshold           = 10
   treat_missing_data  = "notBreaching"
-  alarm_description   = "This metric monitors 4XX errors in the metrics API gateway"
   alarm_actions       = [aws_sns_topic.critical.arn]
   ok_actions          = [aws_sns_topic.critical.arn]
   dimensions = {
@@ -85,7 +81,6 @@ resource "aws_cloudwatch_metric_alarm" "logs-1-429-error-1-minute-warning" {
   statistic           = "Sum"
   threshold           = 1
   treat_missing_data  = "notBreaching"
-  alarm_description   = "This metric monitors 400 errors in the metrics API gateway"
   alarm_actions       = [aws_sns_topic.warning.arn]
 }
 
