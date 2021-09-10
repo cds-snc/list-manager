@@ -34,16 +34,16 @@ resource "aws_cloudwatch_metric_alarm" "logs-10-5XX-error-5-minutes-critical" {
   }
 }
 
-resource "aws_cloudwatch_metric_alarm" "logs-1-4xx-error-1-minute-warning" {
-  alarm_name          = "logs-1-4xx-error-1-minute-warning"
-  alarm_description   = "One 4xx error in 1 minute"
+resource "aws_cloudwatch_metric_alarm" "logs-5-4xx-error-1-minute-warning" {
+  alarm_name          = "logs-5-4xx-error-1-minute-warning"
+  alarm_description   = "Five 4xx error in 1 minute"
   comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods  = "1"
   metric_name         = "4XXError"
   namespace           = "AWS/ApiGateway"
   period              = "60"
   statistic           = "Sum"
-  threshold           = 1
+  threshold           = 5
   treat_missing_data  = "notBreaching"
   alarm_actions       = [aws_sns_topic.warning.arn]
   ok_actions          = [aws_sns_topic.warning.arn]
