@@ -538,12 +538,12 @@ def test_create_list_invalid_domain(field, value):
 @pytest.mark.parametrize(
     "field,value",
     [
-        ("subscribe_redirect_url", "https://valid.canada.ca/redirect_target"),
-        ("confirm_redirect_url", "https://valid.canada.ca/redirect_target"),
-        ("unsubscribe_redirect_url", "https://valid.canada.ca/redirect_target"),
-        ("subscribe_redirect_url", "https://valid.gc.ca/redirect_target"),
-        ("confirm_redirect_url", "https://valid.gc.ca/redirect_target"),
-        ("unsubscribe_redirect_url", "https://valid.gc.ca/redirect_target"),
+        ("subscribe_redirect_url", "https://ircc.digital.canada.ca/redirect_target"),
+        ("confirm_redirect_url", "https://ircc.digital.canada.ca/redirect_target"),
+        ("unsubscribe_redirect_url", "https://ircc.digital.canada.ca/redirect_target"),
+        ("subscribe_redirect_url", "https://ircc.digital.canada.ca/redirect_target"),
+        ("confirm_redirect_url", "https://ircc.digital.canada.ca/redirect_target"),
+        ("unsubscribe_redirect_url", "https://ircc.digital.canada.ca/redirect_target"),
     ],
 )
 def test_create_list_valid_domain(field, value):
