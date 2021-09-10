@@ -30,11 +30,7 @@ BASE_URL = environ.get("BASE_URL", "https://list-manager.alpha.canada.ca")
 description = """
 List Manager 📝 API helps you manage your lists of subscribers and easily utilize GC Notify to send messages
 """
-app = FastAPI(
-    title="List Manager",
-    description=description,
-    version="0.0.1"
-)
+app = FastAPI(title="List Manager", description=description, version="0.0.1")
 metrics = Metrics(namespace="ListManager", service="api")
 
 
