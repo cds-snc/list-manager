@@ -14,6 +14,7 @@ env:
   TF_VAR_api_auth_token: ${{ secrets.TF_VARS_API_AUTH_TOKEN }}
   TF_VAR_notify_key: ${{ secrets.TF_VARS_NOTIFY_KEY }}
   TF_VAR_rds_password: ${{ secrets.TF_VARS_RDS_PASSWORD }}
+  TF_VAR_slack_webhook_url: ${{ secrets.TF_VARS_SLACK_WEBHOOK_URL }}
 
 jobs:
   terraform-plan:
