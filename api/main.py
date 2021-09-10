@@ -3,7 +3,6 @@ from api_gateway import api
 from logger import log
 from database.migrate import migrate_head
 from aws_lambda_powertools import Metrics
-import os
 
 app = api.app
 metrics = Metrics(namespace="ListManager", service="api")
