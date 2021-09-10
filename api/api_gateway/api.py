@@ -25,8 +25,6 @@ METRICS_EMAIL_TARGET = "email"
 METRICS_SMS_TARGET = "sms"
 NOTIFY_KEY = environ.get("NOTIFY_KEY")
 REDIRECT_ALLOW_LIST = [
-    "valid.canada.ca",
-    "valid.gc.ca",
     "ircc.digital.canada.ca",
     "ircc.numerique.canada.ca",
 ]
