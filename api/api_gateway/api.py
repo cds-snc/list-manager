@@ -543,3 +543,48 @@ def get_confirm_link(subscription_id):
 
 def get_unsubscribe_link(subscription_id):
     return f"{BASE_URL}/unsubscribe/{subscription_id}"
+
+
+class CountsPayload(BaseModel):
+    service_id: str
+
+    class Config:
+        extra = "forbid"
+
+
+@app.post("/list-counts")
+def get_list_counts(
+    counts_payload: CountsPayload,
+    response: Response,
+    session: Session = Depends(get_db),
+    _authorized: bool = Depends(verify_token),
+):
+    service_id = counts_payload.service_id
+    lists = session.query(List.id).filter(List.service_id == service_id).all()
+
+    list_ids = list(
+        map(
+            lambda l: str(l.id),
+            lists,
+        )
+    )
+
+    lists = (
+        session.query(func.count(Subscription.email), Subscription.list_id)
+        .filter(
+            Subscription.list_id.in_(list_ids),
+            Subscription.confirmed.is_(True),
+        )
+        .group_by(Subscription.list_id)
+        .all()
+    )
+
+    return list(
+        map(
+            lambda l: {
+                "list_id": l[1],
+                "subscriber_count": l[0],
+            },
+            lists,
+        )
+    )
