@@ -685,9 +685,25 @@ def test_edit_list_with_correct_id_unknown_error(mock_db_session, list_fixture):
 
 
 @patch("api_gateway.api.get_notify_client")
+def test_send_no_api_key(mock_client):
+    response = client.post(
+        "/send",
+        json={
+            "list_id": str(uuid.uuid4()),
+            "template_id": str(uuid.uuid4()),
+            "template_type": "email",
+        },
+    )
+    data = response.json()
+    assert data == {"detail": "Unauthorized"}
+    assert response.status_code == 401
+
+
+@patch("api_gateway.api.get_notify_client")
 def test_send_invalid_list(mock_client):
     response = client.post(
         "/send",
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
         json={
             "list_id": str(uuid.uuid4()),
             "template_id": str(uuid.uuid4()),
@@ -707,6 +723,7 @@ def test_send_notify_error(mock_client, mock_db_session):
     mock_client.side_effect = HTTPError()
     response = client.post(
         "/send",
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
         json={
             "list_id": str(uuid.uuid4()),
             "template_id": str(uuid.uuid4()),
@@ -722,6 +739,7 @@ def test_send_email(mock_client, list_fixture):
     template_id = str(uuid.uuid4())
     response = client.post(
         "/send",
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
         json={
             "list_id": str(list_fixture.id),
             "template_id": template_id,
@@ -818,6 +836,7 @@ def test_send_duplicate_emails(mock_client, list_fixture_with_duplicates):
     template_id = str(uuid.uuid4())
     response = client.post(
         "/send",
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
         json={
             "list_id": str(list_fixture_with_duplicates.id),
             "template_id": template_id,
@@ -832,6 +851,7 @@ def test_send_duplicate_emails(mock_client, list_fixture_with_duplicates):
 
     response = client.post(
         "/send",
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
         json={
             "list_id": str(list_fixture_with_duplicates.id),
             "template_id": template_id,
@@ -851,6 +871,7 @@ def test_send_duplicate_phones(mock_client, list_fixture_with_duplicates):
     template_id = str(uuid.uuid4())
     response = client.post(
         "/send",
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
         json={
             "list_id": str(list_fixture_with_duplicates.id),
             "template_id": template_id,
@@ -866,6 +887,7 @@ def test_send_duplicate_phones(mock_client, list_fixture_with_duplicates):
     template_id = str(uuid.uuid4())
     response = client.post(
         "/send",
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
         json={
             "list_id": str(list_fixture_with_duplicates.id),
             "template_id": template_id,

@@ -451,7 +451,10 @@ class SendPayload(BaseModel):
 
 @app.post("/send")
 def send(
-    send_payload: SendPayload, response: Response, session: Session = Depends(get_db)
+    send_payload: SendPayload,
+    response: Response,
+    session: Session = Depends(get_db),
+    _authorized: bool = Depends(verify_token),
 ):
     try:
         template_type = send_payload.template_type
