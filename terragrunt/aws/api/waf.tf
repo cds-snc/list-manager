@@ -41,6 +41,10 @@ resource "aws_wafv2_web_acl" "api_waf" {
       managed_rule_group_statement {
         name        = "AWSManagedRulesCommonRuleSet"
         vendor_name = "AWS"
+
+        excluded_rule {
+          name = "GenericRFI_BODY"
+        }
       }
     }
 
