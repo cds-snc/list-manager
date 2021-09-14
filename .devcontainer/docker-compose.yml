@@ -24,6 +24,7 @@ services:
       - ..:/workspace:cached   
     command: sleep infinity
     environment:
+      SHELL: /bin/zsh
       <<: *db-connection-strings
 
   api:
