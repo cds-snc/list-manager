@@ -1,4 +1,8 @@
 resource "aws_lambda_function" "api" {
+  # checkov:skip=CKV_AWS_115: No function-level concurrent execution limit required
+  # checkov:skip=CKV_AWS_116: No Dead Letter Queue required
+  # checkov:skip=CKV_AWS_173: Lambda environment variable encryption with default KMS key is acceptable
+
   function_name = "api"
 
   package_type = "Image"
@@ -20,6 +24,10 @@ resource "aws_lambda_function" "api" {
   vpc_config {
     security_group_ids = [module.rds.proxy_security_group_id, aws_security_group.api.id]
     subnet_ids         = module.vpc.private_subnet_ids
+  }
+
+  tracing_config {
+    mode = "PassThrough"
   }
 
   lifecycle {
