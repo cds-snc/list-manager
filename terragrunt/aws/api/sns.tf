@@ -35,8 +35,11 @@ resource "aws_sns_topic_subscription" "warning" {
 # Lambda: post notifications to Slack
 #
 resource "aws_lambda_function" "notify_slack" {
-  # checkov:skip=CKV_AWS_115:No function-level concurrent execution limit required
-  # checkov:skip=CKV_AWS_116:No Dead Letter Queue required
+  # checkov:skip=CKV_AWS_50: X-ray tracing not required for this function
+  # checkov:skip=CKV_AWS_115: No function-level concurrent execution limit required
+  # checkov:skip=CKV_AWS_116: No Dead Letter Queue required
+  # checkov:skip=CKV_AWS_173: Lambda environment variable encryption with default KMS key is acceptable
+
   function_name = "notify_slack"
   description   = "Lambda function to post CloudWatch alarm notifications to a Slack channel."
 
@@ -55,6 +58,11 @@ resource "aws_lambda_function" "notify_slack" {
       PROJECT_NAME      = "ListManager"
       LOG_EVENTS        = "True"
     }
+  }
+
+  vpc_config {
+    security_group_ids = [aws_security_group.notify_slack.id]
+    subnet_ids         = module.vpc.private_subnet_ids
   }
 
   depends_on = [
@@ -138,6 +146,7 @@ data "aws_iam_policy_document" "notify_slack_lambda" {
 # CloudWatch: Lambda logs
 #
 resource "aws_cloudwatch_log_group" "notify_slack_lambda" {
+  # checkov:skip=CKV_AWS_158: CloudWatch log group encryption with default KMS key is acceptable
   name              = "/aws/lambda/notify_slack"
   retention_in_days = "14"
 
