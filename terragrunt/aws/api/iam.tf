@@ -38,7 +38,7 @@ data "aws_iam_policy_document" "api_policies" {
     ]
 
     resources = [
-      "*"
+      "arn:aws:logs:${var.region}:${var.account_id}:log-group:*"
     ]
   }
 
