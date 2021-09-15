@@ -437,6 +437,7 @@ class SendPayload(BaseModel):
     list_id: UUID
     template_id: UUID
     template_type: str
+    service_api_key: Optional[UUID]
     job_name: Optional[str] = "Bulk email"
     unique: Optional[bool] = True
 
@@ -523,7 +524,7 @@ def send_bulk_notify(subscription_count, send_payload, rows, recipient_limit=500
         if i == subscription_count - 1:
             notify_bulk_subscribers.append(subscription_rows)
 
-    notifications_client = get_notify_client()
+    notifications_client = get_notify_client(send_payload.service_api_key)
 
     count_sent = 0
     for subscribers in notify_bulk_subscribers:
@@ -535,7 +536,7 @@ def send_bulk_notify(subscription_count, send_payload, rows, recipient_limit=500
     return count_sent
 
 
-def get_notify_client():
+def get_notify_client(key=NOTIFY_KEY):
     return NotificationsAPIClient(
         NOTIFY_KEY, base_url="https://api.notification.canada.ca"
     )

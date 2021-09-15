@@ -704,6 +704,7 @@ def test_send_invalid_list(mock_client):
         "/send",
         headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
         json={
+            "service_api_key": str(uuid.uuid4()),
             "list_id": str(uuid.uuid4()),
             "template_id": str(uuid.uuid4()),
             "template_type": "email",
@@ -724,6 +725,7 @@ def test_send_notify_error(mock_client, mock_db_session):
         "/send",
         headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
         json={
+            "service_api_key": str(uuid.uuid4()),
             "list_id": str(uuid.uuid4()),
             "template_id": str(uuid.uuid4()),
             "template_type": "email",
@@ -740,6 +742,7 @@ def test_send_email(mock_client, list_fixture):
         "/send",
         headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
         json={
+            "service_api_key": str(uuid.uuid4()),
             "list_id": str(list_fixture.id),
             "template_id": template_id,
             "template_type": "email",
@@ -837,6 +840,7 @@ def test_send_duplicate_emails(mock_client, list_fixture_with_duplicates):
         "/send",
         headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
         json={
+            "service_api_key": str(uuid.uuid4()),
             "list_id": str(list_fixture_with_duplicates.id),
             "template_id": template_id,
             "template_type": "email",
@@ -852,6 +856,7 @@ def test_send_duplicate_emails(mock_client, list_fixture_with_duplicates):
         "/send",
         headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
         json={
+            "service_api_key": str(uuid.uuid4()),
             "list_id": str(list_fixture_with_duplicates.id),
             "template_id": template_id,
             "template_type": "email",
@@ -872,6 +877,7 @@ def test_send_duplicate_phones(mock_client, list_fixture_with_duplicates):
         "/send",
         headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
         json={
+            "service_api_key": str(uuid.uuid4()),
             "list_id": str(list_fixture_with_duplicates.id),
             "template_id": template_id,
             "template_type": "phone",
@@ -888,6 +894,7 @@ def test_send_duplicate_phones(mock_client, list_fixture_with_duplicates):
         "/send",
         headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
         json={
+            "service_api_key": str(uuid.uuid4()),
             "list_id": str(list_fixture_with_duplicates.id),
             "template_id": template_id,
             "template_type": "phone",
