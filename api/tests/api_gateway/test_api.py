@@ -931,21 +931,6 @@ def test_verify_token_returns_true_if_token_is_correct():
     assert api.verify_token(request)
 
 
-@patch("api_gateway.api.get_notify_client")
-def test_counts_when_list_has_no_subscribers(mock_client):
-
-    response = client.post(
-        "/list-counts",
-        json={
-            "service_id": str(uuid.uuid4()),
-        },
-        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
-    )
-    data = response.json()
-
-    assert len(data) == 0
-
-
 def subscribe_users(session, user_list, fixture):
     for user in user_list:
         subscription = Subscription(
@@ -958,6 +943,17 @@ def subscribe_users(session, user_list, fixture):
 def find_item_by_id(data, item_id):
     item = [element for element in data if element["list_id"] == item_id]
     return item[0]
+
+
+@patch("api_gateway.api.get_notify_client")
+def test_counts_when_list_has_no_subscribers(mock_client, list_count_fixture_1):
+    response = client.get(
+        f"/lists/{str(list_count_fixture_1.service_id)}/subscriber-count",
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
+    )
+    data = response.json()
+
+    assert len(data) == 0
 
 
 @patch("api_gateway.api.get_notify_client")
@@ -999,11 +995,8 @@ def test_counts_when_list_has_subscribers(
 
     subscribe_users(session, list_2_emails, list_count_fixture_2)
 
-    response = client.post(
-        "/list-counts",
-        json={
-            "service_id": str(list_count_fixture_1.service_id),
-        },
+    response = client.get(
+        f"/lists/{str(list_count_fixture_1.service_id)}/subscriber-count",
         headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
     )
 
