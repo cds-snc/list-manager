@@ -14,6 +14,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from requests import HTTPError
 
 from models.List import List
+from models.Subscription import Subscription
 
 from api_gateway.api import send_bulk_notify, SendPayload
 
@@ -949,3 +950,83 @@ def test_verify_token_returns_true_if_token_is_correct():
     request = MagicMock()
     request.headers = {"Authorization": os.environ["API_AUTH_TOKEN"]}
     assert api.verify_token(request)
+
+
+def subscribe_users(session, user_list, fixture):
+    for user in user_list:
+        subscription = Subscription(
+            email=user["email"], list=fixture, confirmed=user["confirmed"]
+        )
+        session.add(subscription)
+        session.commit()
+
+
+def find_item_by_id(data, item_id):
+    item = [element for element in data if element["list_id"] == item_id]
+    return item[0]
+
+
+@patch("api_gateway.api.get_notify_client")
+def test_counts_when_list_has_no_subscribers(mock_client, list_count_fixture_1):
+    response = client.get(
+        f"/lists/{str(list_count_fixture_1.service_id)}/subscriber-count",
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
+    )
+    data = response.json()
+
+    assert len(data) == 0
+
+
+@patch("api_gateway.api.get_notify_client")
+def test_counts_when_list_has_subscribers(
+    mock_client,
+    session,
+    list_count_fixture_0,
+    list_count_fixture_1,
+    list_count_fixture_2,
+):
+    # add subscribers to list 0
+    # note service id doesn't match the other lists
+    # i.e. these shouldn't end up in the response
+    list_0_emails = [
+        {"email": "list0+0@example.com", "confirmed": True},
+        {"email": "list0+1@example.com", "confirmed": False},
+        {"email": "list0+2@example.com", "confirmed": True},
+        {"email": "list0+3@example.com", "confirmed": False},
+    ]
+
+    subscribe_users(session, list_0_emails, list_count_fixture_0)
+
+    # add subscribers to list 1
+    list_1_emails = [
+        {"email": "list1+0@example.com", "confirmed": False},
+        {"email": "list1+1@example.com", "confirmed": True},
+        {"email": "list1+2@example.com", "confirmed": True},
+    ]
+
+    subscribe_users(session, list_1_emails, list_count_fixture_1)
+
+    # add subscribers to list 2
+    list_2_emails = [
+        {"email": "list2+0@example.com", "confirmed": True},
+        {"email": "list2+1@example.com", "confirmed": True},
+        {"email": "list2+2@example.com", "confirmed": True},
+        {"email": "list2+3@example.com", "confirmed": False},
+    ]
+
+    subscribe_users(session, list_2_emails, list_count_fixture_2)
+
+    response = client.get(
+        f"/lists/{str(list_count_fixture_1.service_id)}/subscriber-count",
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
+    )
+
+    data = response.json()
+
+    assert len(data) == 2
+
+    # check list 1
+    assert find_item_by_id(data, str(list_count_fixture_1.id))["subscriber_count"] == 2
+
+    # check list 2
+    assert find_item_by_id(data, str(list_count_fixture_2.id))["subscriber_count"] == 3

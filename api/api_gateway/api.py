@@ -135,6 +135,43 @@ def lists_by_service(service_id, session: Session = Depends(get_db)):
     )
 
 
+@app.get("/lists/{service_id}/subscriber-count")
+def get_list_counts(
+    service_id,
+    response: Response,
+    session: Session = Depends(get_db),
+    _authorized: bool = Depends(verify_token),
+):
+    lists = session.query(List.id).filter(List.service_id == service_id).all()
+
+    list_ids = list(
+        map(
+            lambda l: str(l.id),
+            lists,
+        )
+    )
+
+    lists = (
+        session.query(func.count(Subscription.email), Subscription.list_id)
+        .filter(
+            Subscription.list_id.in_(list_ids),
+            Subscription.confirmed.is_(True),
+        )
+        .group_by(Subscription.list_id)
+        .all()
+    )
+
+    return list(
+        map(
+            lambda l: {
+                "list_id": l[1],
+                "subscriber_count": l[0],
+            },
+            lists,
+        )
+    )
+
+
 @app.post("/list")
 def create_list(
     list_payload: ListPayload,
