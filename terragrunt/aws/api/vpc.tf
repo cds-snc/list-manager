@@ -96,5 +96,5 @@ resource "aws_security_group" "notify_slack" {
     to_port     = 443
     protocol    = "TCP"
     cidr_blocks = ["0.0.0.0/0"]
-  }  
+  }
 }
