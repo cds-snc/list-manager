@@ -51,6 +51,7 @@ resource "aws_network_acl_rule" "ephemeral_ports_egress" {
 }
 
 resource "aws_security_group" "api" {
+  # checkov:skip=CKV2_AWS_5: False-positive, SG is attached in lambda.tf
 
   name        = "${var.product_name}_api_sg"
   description = "SG for the API lambda"
@@ -68,4 +69,32 @@ resource "aws_security_group" "api" {
     protocol    = "TCP"
     cidr_blocks = ["0.0.0.0/0"]
   }
+}
+
+resource "aws_security_group" "notify_slack" {
+  # checkov:skip=CKV2_AWS_5: False-positive, SG is attached in lambda.tf
+
+  name        = "${var.product_name}_notify_slack_sg"
+  description = "SG for the CloudWatch Notify Slack lambda"
+
+  vpc_id = module.vpc.vpc_id
+
+  tags = {
+    CostCentre = var.billing_code
+    Name       = "${var.product_name}_notify_slack_sg"
+  }
+
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "TCP"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "TCP"
+    cidr_blocks = ["0.0.0.0/0"]
+  }  
 }
