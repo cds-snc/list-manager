@@ -28,7 +28,7 @@ resource "aws_cloudwatch_log_group" "api_access" {
 
 # This account will be used by all API Gateway resources in the account and region
 resource "aws_api_gateway_account" "api_cloudwatch" {
-  cloudwatch_role_arn = aws_iam_role.api.arn
+  cloudwatch_role_arn = aws_iam_role.api_cloudwatch.arn
 }
 
 resource "aws_iam_role" "api_cloudwatch" {
