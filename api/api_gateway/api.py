@@ -474,7 +474,7 @@ class SendPayload(BaseModel):
     list_id: UUID
     template_id: UUID
     template_type: str
-    service_api_key: Optional[UUID]
+    service_api_key: Optional[str]
     job_name: Optional[str] = "Bulk email"
     unique: Optional[bool] = True
 
