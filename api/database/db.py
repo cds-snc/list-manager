@@ -8,5 +8,12 @@ if os.environ.get("CI"):
 else:
     connection_string = os.environ.get("SQLALCHEMY_DATABASE_URI")
 # Timeout is set to 10 seconds
-db_engine = create_engine(connection_string, connect_args={"connect_timeout": 10})
+db_engine = create_engine(
+    connection_string,
+    pool_size=1,
+    max_overflow=0,
+    pool_recycle=3600,
+    pool_pre_ping=True,
+    pool_use_lifo=True,
+)
 db_session = sessionmaker(bind=db_engine)
