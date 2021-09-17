@@ -181,6 +181,7 @@ resource "aws_cloudwatch_metric_alarm" "waf-block-request-warning" {
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = "1"
   threshold           = "10"
+  treat_missing_data  = "notBreaching"
   alarm_actions       = [aws_sns_topic.warning.arn]
   ok_actions          = [aws_sns_topic.warning.arn]
 
