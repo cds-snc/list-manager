@@ -1063,7 +1063,7 @@ def test_api_docs_enabled_via_environ():
     response = my_client.get("/docs")
     assert response.status_code == 200
 
-    response = client.get("/redoc")
+    response = my_client.get("/redoc")
     assert response.status_code == 200
 
     response = my_client.get("/openapi.json")
