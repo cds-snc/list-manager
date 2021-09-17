@@ -8,6 +8,7 @@ from aws_lambda_powertools.metrics import MetricUnit
 from fastapi.testclient import TestClient
 from fastapi import HTTPException
 from unittest.mock import ANY, MagicMock, patch
+from importlib import reload
 
 from api_gateway import api
 from sqlalchemy.exc import SQLAlchemyError
@@ -1037,3 +1038,33 @@ def test_counts_when_list_has_subscribers(
 
     # check list 2
     assert find_item_by_id(data, str(list_count_fixture_2.id))["subscriber_count"] == 3
+
+
+@patch.dict(os.environ, {"OPENAPI_URL": ""}, clear=True)
+def test_api_docs_disabled_via_environ():
+    reload(api)
+
+    my_client = TestClient(api.app)
+    response = my_client.get("/docs")
+    assert response.status_code == 404
+
+    response = my_client.get("/redoc")
+    assert response.status_code == 404
+
+    response = my_client.get("/openapi.json")
+    assert response.status_code == 404
+
+
+@patch.dict(os.environ, {"OPENAPI_URL": "/openapi.json"}, clear=True)
+def test_api_docs_enabled_via_environ():
+    reload(api)
+
+    my_client = TestClient(api.app)
+    response = my_client.get("/docs")
+    assert response.status_code == 200
+
+    response = my_client.get("/redoc")
+    assert response.status_code == 200
+
+    response = my_client.get("/openapi.json")
+    assert response.status_code == 200

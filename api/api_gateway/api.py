@@ -18,8 +18,14 @@ from models.List import List
 from models.Subscription import Subscription
 
 from typing import Optional
-from pydantic import BaseModel, EmailStr, HttpUrl, validator
+from pydantic import BaseModel, BaseSettings, EmailStr, HttpUrl, validator
 
+
+class Settings(BaseSettings):
+    openapi_url: str = environ.get("OPENAPI_URL", "")
+
+
+settings = Settings()
 API_AUTH_TOKEN = environ.get("API_AUTH_TOKEN", uuid4())
 METRICS_EMAIL_TARGET = "email"
 METRICS_SMS_TARGET = "sms"
@@ -33,7 +39,12 @@ BASE_URL = environ.get("BASE_URL", "https://list-manager.alpha.canada.ca")
 description = """
 List Manager 📝 API helps you manage your lists of subscribers and easily utilize GC Notify to send messages
 """
-app = FastAPI(title="List Manager", description=description, version="0.0.1")
+app = FastAPI(
+    title="List Manager",
+    description=description,
+    version="0.0.1",
+    openapi_url=settings.openapi_url,
+)
 metrics = Metrics(namespace="ListManager", service="api")
 
 
@@ -92,7 +103,10 @@ class ListPayload(BaseModel):
     unsubscribe_redirect_url: Optional[HttpUrl] = None
 
     @validator(
-        "subscribe_redirect_url", "confirm_redirect_url", "unsubscribe_redirect_url"
+        "subscribe_redirect_url",
+        "confirm_redirect_url",
+        "unsubscribe_redirect_url",
+        allow_reuse=True,
     )
     def redirect_url_in_allow_list(cls, v):
         if v.host not in REDIRECT_ALLOW_LIST:
@@ -478,7 +492,7 @@ class SendPayload(BaseModel):
     job_name: Optional[str] = "Bulk email"
     unique: Optional[bool] = True
 
-    @validator("template_type")
+    @validator("template_type", allow_reuse=True)
     def template_type_email_or_phone(cls, v):
         if v.lower() not in ["email", "phone"]:
             raise ValueError("must be either email or phone")
