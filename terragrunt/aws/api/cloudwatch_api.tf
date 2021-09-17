@@ -161,13 +161,14 @@ resource "aws_cloudwatch_metric_alarm" "api-invalid-auth-token-warning" {
   evaluation_periods  = "1"
   metric_name         = "IncorrectAuthorizationToken"
   namespace           = "ListManager"
+  statistic           = "Sum"
   period              = "300"
   threshold           = 5
   treat_missing_data  = "notBreaching"
   alarm_actions       = [aws_sns_topic.warning.arn]
   ok_actions          = [aws_sns_topic.warning.arn]
   dimensions = {
-    service = aws_api_gateway_rest_api.api.name
+    service = "api"
   }
 }
 
