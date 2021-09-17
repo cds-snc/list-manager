@@ -36,6 +36,7 @@ services:
       <<: *db-connection-strings
       AWS_LOCALSTACK: "True"
       AXE_CORE_URLS_TOPIC: "arn:aws:sns:us-east-1:000000000000:axe-core-urls-topic"
+      OPENAPI_URL: "/openapi.json"
  
   db:
     image: postgres:11.2
