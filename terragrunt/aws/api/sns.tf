@@ -19,6 +19,17 @@ resource "aws_sns_topic" "warning" {
   }
 }
 
+resource "aws_sns_topic" "warning_us_east" {
+  provider = aws.us-east-1
+
+  name              = "warning-alert-list-manager"
+  kms_master_key_id = aws_kms_key.list-manager-us-east.arn
+
+  tags = {
+    CostCenter = var.billing_code
+  }
+}
+
 resource "aws_sns_topic_subscription" "critical" {
   topic_arn = aws_sns_topic.critical.arn
   protocol  = "lambda"
@@ -27,6 +38,14 @@ resource "aws_sns_topic_subscription" "critical" {
 
 resource "aws_sns_topic_subscription" "warning" {
   topic_arn = aws_sns_topic.warning.arn
+  protocol  = "lambda"
+  endpoint  = aws_lambda_function.notify_slack.arn
+}
+
+resource "aws_sns_topic_subscription" "warning_us_east" {
+  provider = aws.us-east-1
+
+  topic_arn = aws_sns_topic.warning_us_east.arn
   protocol  = "lambda"
   endpoint  = aws_lambda_function.notify_slack.arn
 }
@@ -87,6 +106,14 @@ resource "aws_lambda_permission" "notify_slack_warning" {
   function_name = aws_lambda_function.notify_slack.function_name
   principal     = "sns.amazonaws.com"
   source_arn    = aws_sns_topic.warning.arn
+}
+
+resource "aws_lambda_permission" "notify_slack_warning_us_east" {
+  statement_id  = "AllowExecutionFromSNSWarningUsEast"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.notify_slack.function_name
+  principal     = "sns.amazonaws.com"
+  source_arn    = aws_sns_topic.warning_us_east.arn
 }
 
 resource "aws_lambda_permission" "notify_slack_critical" {

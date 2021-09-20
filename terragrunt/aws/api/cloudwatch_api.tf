@@ -177,10 +177,10 @@ resource "aws_cloudwatch_metric_alarm" "api-invalid-auth-token-warning" {
 # 
 resource "aws_cloudwatch_metric_alarm" "waf-block-request-warning" {
   alarm_name          = "waf-block-request-warning"
-  alarm_description   = "10% of requests being blocked in 5 minute period warning"
+  alarm_description   = "50% of requests being blocked in 5 minute period warning"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = "1"
-  threshold           = "10"
+  threshold           = "50"
   treat_missing_data  = "notBreaching"
   alarm_actions       = [aws_sns_topic.warning.arn]
   ok_actions          = [aws_sns_topic.warning.arn]
@@ -222,5 +222,25 @@ resource "aws_cloudwatch_metric_alarm" "waf-block-request-warning" {
         WebACL = aws_wafv2_web_acl.api_waf.name
       }
     }
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "route53_list_manager_health_check" {
+  provider = aws.us-east-1
+
+  alarm_name          = "route53-list-manager-health-check"
+  alarm_description   = "Health check failing for the list manager"
+  comparison_operator = "LessThanThreshold"
+  metric_name         = "HealthCheckStatus"
+  namespace           = "AWS/Route53"
+  period              = "60"
+  evaluation_periods  = "2"
+  statistic           = "Average"
+  threshold           = "1"
+  treat_missing_data  = "breaching"
+  alarm_actions       = [aws_sns_topic.warning_us_east.arn]
+  ok_actions          = [aws_sns_topic.warning_us_east.arn]
+  dimensions = {
+    HealthCheckId = aws_route53_health_check.list_manager.id
   }
 }
