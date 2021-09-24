@@ -1,6 +1,4 @@
 
-data "aws_caller_identity" "current" {}
-
 data "aws_iam_policy_document" "kms_policies" {
   # checkov:skip=CKV_AWS_109: `resources=["*"]` references the key the policy is attached to
   # checkov:skip=CKV_AWS_111: `resources=["*"]` references the key the policy is attached to
@@ -66,6 +64,19 @@ data "aws_iam_policy_document" "kms_policies" {
 }
 
 resource "aws_kms_key" "list-manager" {
+  description         = "KMS Key"
+  enable_key_rotation = true
+
+  policy = data.aws_iam_policy_document.kms_policies.json
+
+  tags = {
+    CostCenter = var.billing_code
+  }
+}
+
+resource "aws_kms_key" "list-manager-us-east" {
+  provider = aws.us-east-1
+
   description         = "KMS Key"
   enable_key_rotation = true
 
