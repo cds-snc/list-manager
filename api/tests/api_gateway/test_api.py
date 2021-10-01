@@ -971,6 +971,9 @@ def subscribe_users(session, user_list, fixture):
 
 def find_item_by_id(data, item_id):
     item = [element for element in data if element["list_id"] == item_id]
+    if len(item) == 0:
+        return []
+
     return item[0]
 
 
@@ -1038,6 +1041,54 @@ def test_counts_when_list_has_subscribers(
 
     # check list 2
     assert find_item_by_id(data, str(list_count_fixture_2.id))["subscriber_count"] == 3
+
+
+@patch("api_gateway.api.get_notify_client")
+def test_remove_all_subscribers_from_list(
+    mock_client,
+    session,
+    list_reset_fixture_0,
+):
+    # add subscribers to list 0
+    list_0_emails = [
+        {"email": "list0+0@example.com", "confirmed": True},
+        {"email": "list0+1@example.com", "confirmed": False},
+        {"email": "list0+2@example.com", "confirmed": True},
+        {"email": "list0+3@example.com", "confirmed": True},
+    ]
+
+    subscribe_users(session, list_0_emails, list_reset_fixture_0)
+
+    data = session.query(Subscription).filter(
+        Subscription.list_id == list_reset_fixture_0.id
+    )
+
+    assert data.count() == 4
+
+    # reset the list
+    client.put(
+        f"/list/{str(list_reset_fixture_0.id)}/reset",
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
+    )
+
+    data = session.query(Subscription).filter(
+        Subscription.list_id == list_reset_fixture_0.id
+    )
+    assert data.count() == 0
+
+    # add one user back
+    subscribe_users(
+        session,
+        [
+            {"email": "list-new+0@example.com", "confirmed": True},
+        ],
+        list_reset_fixture_0,
+    )
+
+    data = session.query(Subscription).filter(
+        Subscription.list_id == list_reset_fixture_0.id
+    )
+    assert data.count() == 1
 
 
 @patch.dict(os.environ, {"OPENAPI_URL": ""}, clear=True)

@@ -94,6 +94,22 @@ def list_count_fixture_2(session):
 
 
 @pytest.fixture(scope="session")
+def list_reset_fixture_0(session):
+    list = List(
+        name="list_reset_0",
+        language="en",
+        service_id="fixture_reset_service_id_0",
+        subscribe_email_template_id="87375f47-0fb1-4459-ab36-97a5c1ba358f",
+        unsubscribe_email_template_id="b6ea8854-3f45-4f5c-808f-61612d920eb3",
+        subscribe_phone_template_id="42427c7f-d041-411d-9b92-5890cade3d9a",
+        unsubscribe_phone_template_id="rae60d25-0c83-45b7-b2ba-db208281e4e4",
+    )
+    session.add(list)
+    session.commit()
+    return list
+
+
+@pytest.fixture(scope="session")
 def list_fixture_with_redirects(session):
     list = List(
         name="fixture_name_with_redirects",
