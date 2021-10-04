@@ -287,6 +287,31 @@ def delete_list(
         return {"error": "error deleting list"}
 
 
+@app.put("/list/{list_id}/reset")
+def reset_list(
+    list_id,
+    response: Response,
+    session: Session = Depends(get_db),
+    _authorized: bool = Depends(verify_token),
+):
+    try:
+        list = session.query(List).get(list_id)
+        if list is None:
+            raise NoResultFound
+    except SQLAlchemyError:
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return {"error": "list not found"}
+
+    try:
+        session.query(Subscription).filter(Subscription.list_id == list_id).delete()
+        session.commit()
+    except SQLAlchemyError:
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"error": "error resetting list"}
+
+    return {"status": "OK"}
+
+
 class SubscriptionEvent(BaseModel):
     email: Optional[EmailStr] = None
     phone: Optional[str] = None
