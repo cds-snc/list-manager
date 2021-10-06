@@ -316,6 +316,7 @@ class SubscriptionEvent(BaseModel):
     email: Optional[EmailStr] = None
     phone: Optional[str] = None
     list_id: str
+    service_api_key: Optional[str]
 
     class Config:
         extra = "forbid"
@@ -327,7 +328,11 @@ def create_subscription(
     response: Response,
     session: Session = Depends(get_db),
 ):
-    notifications_client = get_notify_client()
+    if subscription_payload.service_api_key:
+        notifications_client = get_notify_client(subscription_payload.service_api_key)
+    else:
+        notifications_client = get_notify_client()
+
     try:
         list = session.query(List).get(subscription_payload.list_id)
         if list is None:
