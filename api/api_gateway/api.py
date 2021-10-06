@@ -33,6 +33,8 @@ NOTIFY_KEY = environ.get("NOTIFY_KEY")
 REDIRECT_ALLOW_LIST = [
     "ircc.digital.canada.ca",
     "ircc.numerique.canada.ca",
+    "articles.cdssandbox.xyz",
+    "articles.alpha.canada.ca"
 ]
 BASE_URL = environ.get("BASE_URL", "https://list-manager.alpha.canada.ca")
 
