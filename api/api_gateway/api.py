@@ -617,9 +617,9 @@ def send_bulk_notify(subscription_count, send_payload, rows, recipient_limit=500
     return count_sent
 
 
-def get_notify_client(key=NOTIFY_KEY):
+def get_notify_client(api_key=NOTIFY_KEY):
     return NotificationsAPIClient(
-        NOTIFY_KEY, base_url="https://api.notification.canada.ca"
+        api_key, base_url="https://api.notification.canada.ca"
     )
 
 
