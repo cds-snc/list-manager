@@ -170,9 +170,11 @@ def get_list_counts(
 
     print(unique)
 
-    if(unique):
+    if unique:
         lists = (
-            session.query(func.count(func.distinct(Subscription.email)), Subscription.list_id)
+            session.query(
+                func.count(func.distinct(Subscription.email)), Subscription.list_id
+            )
             .filter(
                 Subscription.list_id.in_(list_ids),
                 Subscription.confirmed.is_(True),
