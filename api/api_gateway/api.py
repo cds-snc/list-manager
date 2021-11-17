@@ -151,10 +151,11 @@ def lists_by_service(service_id, session: Session = Depends(get_db)):
     )
 
 
-@app.get("/lists/{service_id}/subscriber-count")
+@app.get("/lists/{service_id}/subscriber-count/")
 def get_list_counts(
     service_id,
     response: Response,
+    unique: Optional[int] = 0,
     session: Session = Depends(get_db),
     _authorized: bool = Depends(verify_token),
 ):
@@ -167,15 +168,28 @@ def get_list_counts(
         )
     )
 
-    lists = (
-        session.query(func.count(Subscription.email), Subscription.list_id)
-        .filter(
-            Subscription.list_id.in_(list_ids),
-            Subscription.confirmed.is_(True),
+    if unique:
+        lists = (
+            session.query(
+                func.count(func.distinct(Subscription.email)), Subscription.list_id
+            )
+            .filter(
+                Subscription.list_id.in_(list_ids),
+                Subscription.confirmed.is_(True),
+            )
+            .group_by(Subscription.list_id)
+            .all()
         )
-        .group_by(Subscription.list_id)
-        .all()
-    )
+    else:
+        lists = (
+            session.query(func.count(Subscription.email), Subscription.list_id)
+            .filter(
+                Subscription.list_id.in_(list_ids),
+                Subscription.confirmed.is_(True),
+            )
+            .group_by(Subscription.list_id)
+            .all()
+        )
 
     return list(
         map(
