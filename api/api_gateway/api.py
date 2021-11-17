@@ -168,8 +168,6 @@ def get_list_counts(
         )
     )
 
-    print(unique)
-
     if unique:
         lists = (
             session.query(
