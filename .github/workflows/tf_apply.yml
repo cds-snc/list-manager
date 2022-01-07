@@ -60,3 +60,8 @@ jobs:
         working-directory: terragrunt/env/api
         run: |
           terragrunt apply --terragrunt-non-interactive -auto-approve
+
+      - name: Run WAF smoketests
+        if: ${{ steps.filter.outputs.api == 'true' }}
+        run: |
+          .github/workflows/scripts/run_waf_smoke_tests.sh

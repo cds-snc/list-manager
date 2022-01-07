@@ -1,0 +1,14 @@
+https://list-manager.alpha.canada.ca/version
+https://list-manager.alpha.canada.ca/healthcheck
+https://list-manager.alpha.canada.ca/lists
+https://list-manager.alpha.canada.ca/lists/30e02846-22c9-4276-9eeb-b9ac949cd61f
+https://list-manager.alpha.canada.ca/lists/30e02846-22c9-4276-9eeb-b9ac949cd61f/subscriber-count/
+https://list-manager.alpha.canada.ca/list
+https://list-manager.alpha.canada.ca/list/30e02846-22c9-4276-9eeb-b9ac949cd61f
+https://list-manager.alpha.canada.ca/list/30e02846-22c9-4276-9eeb-b9ac949cd61f
+https://list-manager.alpha.canada.ca/list/30e02846-22c9-4276-9eeb-b9ac949cd61f/reset
+https://list-manager.alpha.canada.ca/subscription
+https://list-manager.alpha.canada.ca/subscription/30e02846-22c9-4276-9eeb-b9ac949cd61f/confirm
+https://list-manager.alpha.canada.ca/subscription/30e02846-22c9-4276-9eeb-b9ac949cd61f
+https://list-manager.alpha.canada.ca/unsubscribe/30e02846-22c9-4276-9eeb-b9ac949cd61f
+https://list-manager.alpha.canada.ca/send
