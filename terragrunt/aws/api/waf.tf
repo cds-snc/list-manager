@@ -199,66 +199,34 @@ resource "aws_wafv2_regex_pattern_set" "re_list_manager_api" {
   # Regex support is limited, please see: 
   # https://docs.aws.amazon.com/waf/latest/developerguide/waf-regex-pattern-set-managing.html
 
-  # GET /version
-  regular_expression {
-    regex_string = "/version"
-  }
-
-  # GET /healthcheck
-  regular_expression {
-    regex_string = "/healthcheck"
-  }
-
-  # GET /lists
-  regular_expression {
-    regex_string = "/lists"
-  }
-
   # POST /list
+  # GET /lists
+  # GET /healthcheck
+  # GET /version
+  # POST /subscription
+  # POST /send
   regular_expression {
-    regex_string = "/list"
+    regex_string = "/version|/healthcheck|/lists|/list|/subscription|/send"
   }
 
   # GET /lists/<uuid:service_id>
+  # GET /lists/<uuid:service_id>/subscriber-count/
   # PUT /lists/<uuid:service_id>
+  # PUT /list/<uuid:list_id>/reset
   # DELETE /lists/<uuid:service_id>
   regular_expression {
-    regex_string = "/lists/[\\w]{8}-[\\w]{4}-[\\w]{4}-[\\w]{4}-[\\w]{12}"
-  }
-
-  # GET /lists/<uuid:service_id>/subscriber-count/
-  regular_expression {
-    regex_string = "/lists/[\\w]{8}-[\\w]{4}-[\\w]{4}-[\\w]{4}-[\\w]{12}/subscriber-count/"
-  }
-
-  # PUT /list/<uuid:list_id>/reset
-  regular_expression {
-    regex_string = "/list/[\\w]{8}-[\\w]{4}-[\\w]{4}-[\\w]{4}-[\\w]{12}/reset"
-  }
-
-  # POST /subscription
-  regular_expression {
-    regex_string = "/subscription"
+    regex_string = "/lists/[\\w]{8}-[\\w]{4}-[\\w]{4}-[\\w]{4}-[\\w]{12}(/subscriber-count/|/reset)?"
   }
 
   # GET /subscription/<uuid:subscription_id>/confirm
-  regular_expression {
-    regex_string = "/subscription/[\\w]{8}-[\\w]{4}-[\\w]{4}-[\\w]{4}-[\\w]{12}/confirm"
-  }
-
   # DELETE /subscription/<uuid:subscription_id>
   regular_expression {
-    regex_string = "/subscription/[\\w]{8}-[\\w]{4}-[\\w]{4}-[\\w]{4}-[\\w]{12}"
+    regex_string = "/subscription/[\\w]{8}-[\\w]{4}-[\\w]{4}-[\\w]{4}-[\\w]{12}(/confirm)?"
   }
 
   # GET /unsubscribe/<uuid:subscription_id>
   regular_expression {
     regex_string = "/unsubscribe/[\\w]{8}-[\\w]{4}-[\\w]{4}-[\\w]{4}-[\\w]{12}"
-  }
-
-  # POST /send
-  regular_expression {
-    regex_string = "/send"
   }
 
   tags = {
