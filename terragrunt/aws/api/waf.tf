@@ -199,23 +199,23 @@ resource "aws_wafv2_regex_pattern_set" "re_list_manager_api" {
   # Regex support is limited, please see: 
   # https://docs.aws.amazon.com/waf/latest/developerguide/waf-regex-pattern-set-managing.html
 
+  # GET /healthcheck
   # POST /list
   # GET /lists
-  # GET /healthcheck
-  # GET /version
-  # POST /subscription
   # POST /send
+  # POST /subscription
+  # GET /version
   regular_expression {
-    regex_string = "/version|/healthcheck|/lists|/list|/subscription|/send"
+    regex_string = "/healthcheck|/list|/lists|/send|/subscription|/version"
   }
 
-  # GET /lists/<uuid:service_id>
-  # GET /lists/<uuid:service_id>/subscriber-count/
-  # PUT /lists/<uuid:service_id>
   # PUT /list/<uuid:list_id>/reset
+  # GET /lists/<uuid:service_id>
+  # PUT /lists/<uuid:service_id>
+  # GET /lists/<uuid:service_id>/subscriber-count/
   # DELETE /lists/<uuid:service_id>
   regular_expression {
-    regex_string = "/lists/[\\w]{8}-[\\w]{4}-[\\w]{4}-[\\w]{4}-[\\w]{12}(/subscriber-count/|/reset)?"
+    regex_string = "/lists?/[\\w]{8}-[\\w]{4}-[\\w]{4}-[\\w]{4}-[\\w]{12}(/subscriber-count/|/reset)?"
   }
 
   # GET /subscription/<uuid:subscription_id>/confirm
