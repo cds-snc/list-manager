@@ -1119,7 +1119,7 @@ def test_remove_all_subscribers_from_list(
     assert data.count() == 1
 
 
-@patch.dict(os.environ, {"OPENAPI_URL": ""}, clear=True)
+@patch.dict(os.environ, {"OPENAPI_URL": "", "API_AUTH_TOKEN": str(uuid.uuid4())}, clear=True)
 def test_api_docs_disabled_via_environ():
     reload(api)
 
@@ -1134,7 +1134,7 @@ def test_api_docs_disabled_via_environ():
     assert response.status_code == 404
 
 
-@patch.dict(os.environ, {"OPENAPI_URL": "/openapi.json"}, clear=True)
+@patch.dict(os.environ, {"OPENAPI_URL": "/openapi.json", "API_AUTH_TOKEN": str(uuid.uuid4())}, clear=True)
 def test_api_docs_enabled_via_environ():
     reload(api)
 
@@ -1147,3 +1147,9 @@ def test_api_docs_enabled_via_environ():
 
     response = my_client.get("/openapi.json")
     assert response.status_code == 200
+
+
+@patch.dict(os.environ, clear=True)
+@pytest.mark.xfail(raises=ValueError)
+def test_api_auth_token_not_set():
+    reload(api)
