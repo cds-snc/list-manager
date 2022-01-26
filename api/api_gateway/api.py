@@ -28,7 +28,7 @@ class Settings(BaseSettings):
 settings = Settings()
 API_AUTH_TOKEN = environ.get("API_AUTH_TOKEN")
 if API_AUTH_TOKEN is None or not API_AUTH_TOKEN:
-    raise ValueError("error invalid API_AUTH_TOKEN")
+    raise Exception("error API_AUTH_TOKEN is missing")
 
 METRICS_EMAIL_TARGET = "email"
 METRICS_SMS_TARGET = "sms"

@@ -1156,6 +1156,6 @@ def test_api_docs_enabled_via_environ():
 
 
 @patch.dict(os.environ, clear=True)
-@pytest.mark.xfail(raises=ValueError)
+@pytest.mark.xfail(raises=Exception)
 def test_api_auth_token_not_set():
     reload(api)
