@@ -16,7 +16,6 @@ inputs = {
   region                    = "ca-central-1"
   billing_code              = local.cost_center_code
   cbs_satellite_bucket_name = "cbs-satellite-${local.account_id}"
-  }
 }
 
 generate "provider" {
