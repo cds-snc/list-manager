@@ -7,4 +7,7 @@ module "log_bucket" {
   bucket_name       = "${var.product_name}-${var.env}-logs"
   billing_tag_value = var.billing_code
 
+  logging {
+    target_bucket = var.cbs_satellite_bucket_name
+  }
 }
