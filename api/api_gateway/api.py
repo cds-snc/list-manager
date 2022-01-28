@@ -122,6 +122,12 @@ class ListPayload(BaseModel):
         extra = "forbid"
 
 
+class ListUpdatePayload(ListPayload):
+    name: Optional[str]
+    language: Optional[str]
+    service_id: Optional[str]
+
+
 @app.get("/lists")
 def lists(session: Session = Depends(get_db)):
     lists = session.query(List).all()
@@ -244,7 +250,7 @@ def create_list(
 @app.put("/list/{list_id}")
 def update_list(
     list_id,
-    list_payload: ListPayload,
+    list_update_payload: ListUpdatePayload,
     response: Response,
     session: Session = Depends(get_db),
     _authorized: bool = Depends(verify_token),
@@ -260,7 +266,7 @@ def update_list(
     try:
 
         session.query(List).filter(List.id == list.id).update(
-            list_payload.dict(exclude_unset=True)
+            list_update_payload.dict(exclude_unset=True)
         )
 
         session.commit()
