@@ -259,10 +259,26 @@ resource "aws_kinesis_firehose_delivery_stream" "api_waf_logs" {
     role_arn   = aws_iam_role.write_waf_logs.arn
     prefix     = "waf_acl_logs/"
     bucket_arn = "arn:aws:s3:::${var.cbs_satellite_bucket_name}"
+    cloudwatch_logging_options {
+      enabled         = true
+      log_group_name  = aws_cloudwatch_log_group.api_waf_logs.name
+      log_stream_name = "WAFLogS3Delivery"
+    }
   }
 
   tags = {
     CostCenter = var.billing_code
+    Terraform  = true
+  }
+}
+
+resource "aws_cloudwatch_log_group" "api_waf_logs" {
+  name              = "/aws/kinesisfirehose/api_waf_logs"
+  retention_in_days = 14
+
+  tags = {
+    CostCentre = var.billing_code
+    Terraform  = true
   }
 }
 
@@ -305,22 +321,29 @@ data "aws_iam_policy_document" "firehose_assume_role" {
 
 data "aws_iam_policy_document" "write_waf_logs" {
   statement {
+    sid    = "S3PutObjects"
     effect = "Allow"
     actions = [
+      "s3:AbortMultipartUpload",
+      "s3:GetBucketLocation",
+      "s3:GetObject",
       "s3:ListBucket",
+      "s3:ListBucketMultipartUploads",
+      "s3:PutObject"
     ]
     resources = [
-      "arn:aws:s3:::${var.cbs_satellite_bucket_name}"
+      "arn:aws:s3:::${var.cbs_satellite_bucket_name}",
+      "arn:aws:s3:::${var.cbs_satellite_bucket_name}/waf_acl_logs/*"
     ]
   }
   statement {
+    sid    = "CloudWatchPutLogs"
     effect = "Allow"
     actions = [
-      "s3:GetObject*",
-      "s3:PutObject*",
+      "logs:PutLogEvents"
     ]
     resources = [
-      "arn:aws:s3:::${var.cbs_satellite_bucket_name}/waf_acl_logs/*"
+      "${aws_cloudwatch_log_group.api_waf_logs.arn}:*"
     ]
   }
 }
