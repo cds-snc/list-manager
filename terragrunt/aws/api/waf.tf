@@ -259,25 +259,10 @@ resource "aws_kinesis_firehose_delivery_stream" "api_waf_logs" {
     role_arn   = aws_iam_role.write_waf_logs.arn
     prefix     = "waf_acl_logs/"
     bucket_arn = "arn:aws:s3:::${var.cbs_satellite_bucket_name}"
-    cloudwatch_logging_options {
-      enabled         = true
-      log_group_name  = aws_cloudwatch_log_group.api_waf_logs.name
-      log_stream_name = "WAFLogS3Delivery"
-    }
   }
 
   tags = {
     CostCenter = var.billing_code
-    Terraform  = true
-  }
-}
-
-resource "aws_cloudwatch_log_group" "api_waf_logs" {
-  name              = "/aws/kinesisfirehose/api_waf_logs"
-  retention_in_days = 14
-
-  tags = {
-    CostCentre = var.billing_code
     Terraform  = true
   }
 }
@@ -334,16 +319,6 @@ data "aws_iam_policy_document" "write_waf_logs" {
     resources = [
       "arn:aws:s3:::${var.cbs_satellite_bucket_name}",
       "arn:aws:s3:::${var.cbs_satellite_bucket_name}/waf_acl_logs/*"
-    ]
-  }
-  statement {
-    sid    = "CloudWatchPutLogs"
-    effect = "Allow"
-    actions = [
-      "logs:PutLogEvents"
-    ]
-    resources = [
-      "${aws_cloudwatch_log_group.api_waf_logs.arn}:*"
     ]
   }
 }
