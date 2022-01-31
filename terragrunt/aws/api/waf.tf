@@ -257,7 +257,7 @@ resource "aws_kinesis_firehose_delivery_stream" "api_waf_logs" {
 
   extended_s3_configuration {
     role_arn   = aws_iam_role.write_waf_logs.arn
-    prefix     = "waf_acl_logs/"
+    prefix     = "waf_acl_logs/AWSLogs/${var.account_id}/"
     bucket_arn = "arn:aws:s3:::${var.cbs_satellite_bucket_name}"
   }
 
