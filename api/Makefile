@@ -15,7 +15,7 @@ install:
 install-dev:
 	pip3 install --user -r requirements_dev.txt
 
-load-test:	
+load-test:
 	locust
 
 lint:
