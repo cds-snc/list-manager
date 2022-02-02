@@ -3,7 +3,6 @@
 build: ;
 
 dev:
-	export API_AUTH_TOKEN=e184bd87-feac-4582-8ec8-dc63557faa68 &&\
 	uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
 fmt:
