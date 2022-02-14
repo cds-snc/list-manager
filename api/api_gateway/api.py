@@ -243,7 +243,7 @@ def create_list(
         metrics.add_metric(name="ListCreated", unit=MetricUnit.Count, value=1)
         metrics.add_metadata(key="list_id", value=str(list.id))
         return {"id": list.id}
-    except SQLAlchemyError as err:       
+    except SQLAlchemyError as err:
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         metrics.add_metric(name="ListCreateError", unit=MetricUnit.Count, value=1)
         metrics.add_metadata(key="list_id", value=list_create_payload.name)
