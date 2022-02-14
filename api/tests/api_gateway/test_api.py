@@ -1118,48 +1118,6 @@ def test_remove_all_subscribers_from_list(
     assert data.count() == 1
 
 
-@patch.dict(
-    os.environ, {"OPENAPI_URL": "", "API_AUTH_TOKEN": str(uuid.uuid4())}, clear=True
-)
-def test_api_docs_disabled_via_environ():
-    reload(api)
-
-    my_client = TestClient(api.app)
-    response = my_client.get("/docs")
-    assert response.status_code == 404
-
-    response = my_client.get("/redoc")
-    assert response.status_code == 404
-
-    response = my_client.get("/openapi.json")
-    assert response.status_code == 404
-
-
-@patch.dict(
-    os.environ,
-    {"OPENAPI_URL": "/openapi.json", "API_AUTH_TOKEN": str(uuid.uuid4())},
-    clear=True,
-)
-def test_api_docs_enabled_via_environ():
-    reload(api)
-
-    my_client = TestClient(api.app)
-    response = my_client.get("/docs")
-    assert response.status_code == 200
-
-    response = my_client.get("/redoc")
-    assert response.status_code == 200
-
-    response = my_client.get("/openapi.json")
-    assert response.status_code == 200
-
-
-@patch.dict(os.environ, clear=True)
-@pytest.mark.xfail(raises=Exception)
-def test_api_auth_token_not_set():
-    reload(api)
-
-
 def test_email_list_import(session, list_to_be_updated_fixture):
     data = session.query(Subscription).filter(
         Subscription.list_id == list_to_be_updated_fixture.id
@@ -1273,3 +1231,45 @@ def test_email_list_with_unknown_error(mock_db_session, list_to_be_updated_fixtu
         "error": "An unknown error occurred while importing a list"
     }
     assert response.status_code == 500
+
+
+@patch.dict(
+    os.environ, {"OPENAPI_URL": "", "API_AUTH_TOKEN": str(uuid.uuid4())}, clear=True
+)
+def test_api_docs_disabled_via_environ():
+    reload(api)
+
+    my_client = TestClient(api.app)
+    response = my_client.get("/docs")
+    assert response.status_code == 404
+
+    response = my_client.get("/redoc")
+    assert response.status_code == 404
+
+    response = my_client.get("/openapi.json")
+    assert response.status_code == 404
+
+
+@patch.dict(
+    os.environ,
+    {"OPENAPI_URL": "/openapi.json", "API_AUTH_TOKEN": str(uuid.uuid4())},
+    clear=True,
+)
+def test_api_docs_enabled_via_environ():
+    reload(api)
+
+    my_client = TestClient(api.app)
+    response = my_client.get("/docs")
+    assert response.status_code == 200
+
+    response = my_client.get("/redoc")
+    assert response.status_code == 200
+
+    response = my_client.get("/openapi.json")
+    assert response.status_code == 200
+
+
+@patch.dict(os.environ, clear=True)
+@pytest.mark.xfail(raises=Exception)
+def test_api_auth_token_not_set():
+    reload(api)
