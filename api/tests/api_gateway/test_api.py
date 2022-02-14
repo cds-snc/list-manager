@@ -1123,7 +1123,6 @@ def test_email_list_import(session, list_to_be_updated_fixture):
         Subscription.list_id == list_to_be_updated_fixture.id
     )
     assert data.count() == 0
-    print(os.environ["API_AUTH_TOKEN"])
 
     # create email list payload
     email_list = [f"email{str(x)}@example.com" for x in range(10)]
@@ -1228,9 +1227,6 @@ def test_email_list_with_unknown_error(mock_db_session, list_to_be_updated_fixtu
             "emails": email_list,
         },
     )
-    assert response.json() == {
-        "error": "An unknown error occurred while importing a list"
-    }
     assert response.status_code == 500
 
 

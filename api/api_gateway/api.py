@@ -684,15 +684,13 @@ def email_list_import(
             ]
         )
         session.commit()
-    except NoResultFound as error:
-        log.error(error)
+    except NoResultFound:
         response.status_code = status.HTTP_404_NOT_FOUND
         return {"error": "list not found"}
     except SQLAlchemyError as error:
-        log.error(error)
         metrics.add_metric(name="ListEmailImportError", unit=MetricUnit.Count, value=1)
         metrics.add_metadata(key="list_id", value=str(list_import_payload.list_id))
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        return {"error": "An unknown error occurred while importing a list"}
+        return {"error": f"error importing list: {error}"}
     else:
         return {"status": "OK"}
