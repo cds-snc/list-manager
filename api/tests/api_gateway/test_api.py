@@ -905,7 +905,6 @@ def test_send_duplicate_phones(mock_client, list_fixture_with_duplicates):
         },
     )
     data = response.json()
-    print(data)
     assert data["status"] == "OK"
     assert data["sent"] == 3
 
@@ -1159,3 +1158,118 @@ def test_api_docs_enabled_via_environ():
 @pytest.mark.xfail(raises=Exception)
 def test_api_auth_token_not_set():
     reload(api)
+
+
+def test_email_list_import(session, list_to_be_updated_fixture):
+    data = session.query(Subscription).filter(
+        Subscription.list_id == list_to_be_updated_fixture.id
+    )
+    assert data.count() == 0
+
+    # create email list payload
+    email_list = [f"email{str(x)}@example.com" for x in range(10)]
+    response = client.post(
+        "/listimport",
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
+        json={"list_id": str(list_to_be_updated_fixture.id), "emails": email_list},
+    )
+    assert response.status_code == 200
+    assert response.json() == {"status": "OK"}
+
+    data = session.query(Subscription).filter(
+        Subscription.list_id == list_to_be_updated_fixture.id,
+        Subscription.confirmed.is_(True),
+    )
+    assert data.count() == 10
+
+
+def test_email_list_import_list_id_not_valid():
+    # email payload
+    email_list = [f"email{str(x)}@example.com" for x in range(1)]
+    response = client.post(
+        "/listimport",
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
+        json={"list_id": "invalid_list_id", "emails": email_list},
+    )
+    assert response.status_code == 422
+    assert response.json() == {
+        "detail": [
+            {
+                "loc": ["body", "list_id"],
+                "msg": "value is not a valid uuid",
+                "type": "type_error.uuid",
+            }
+        ]
+    }
+
+
+def test_email_list_import_list_not_found():
+    # email payload
+    email_list = [f"email{str(x)}@example.com" for x in range(2)]
+    response = client.post(
+        "/listimport",
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
+        json={"list_id": str(uuid.uuid4()), "emails": email_list},
+    )
+    assert response.status_code == 404
+    assert response.json() == {"error": "list not found"}
+
+
+def test_email_list_import_empty_list_of_emails(list_to_be_updated_fixture):
+    response = client.post(
+        "/listimport",
+        json={"list_id": str(list_to_be_updated_fixture.id), "emails": list()},
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
+    )
+    assert response.status_code == 422
+    assert response.json() == {
+        "detail": [
+            {
+                "loc": ["body", "emails"],
+                "msg": "ensure this value has at least 1 items",
+                "type": "value_error.list.min_items",
+                "ctx": {"limit_value": 1},
+            }
+        ]
+    }
+
+
+def test_email_list_import_max_emails_allow_is_10000(list_to_be_updated_fixture):
+    # emails payload
+    email_list = [f"email{str(x)}@example.com" for x in range(10001)]
+    response = client.post(
+        "/listimport",
+        json={"list_id": str(list_to_be_updated_fixture.id), "emails": email_list},
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
+    )
+    assert response.status_code == 422
+    assert response.json() == {
+        "detail": [
+            {
+                "loc": ["body", "emails"],
+                "msg": "ensure this value has at most 10000 items",
+                "type": "value_error.list.max_items",
+                "ctx": {"limit_value": 10000},
+            }
+        ]
+    }
+
+
+@patch("api_gateway.api.db_session")
+def test_email_list_with_unknown_error(mock_db_session, list_to_be_updated_fixture):
+    mock_session = MagicMock()
+    mock_session.commit.side_effect = SQLAlchemyError()
+    mock_db_session.return_value = mock_session
+    email_list = [f"email{str(x)}@example.com" for x in range(1)]
+    response = client.post(
+        "/listimport",
+        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
+        json={
+            "list_id": str(list_to_be_updated_fixture.id),
+            "emails": email_list,
+        },
+    )
+    assert response.json() == {
+        "error": "An unknown error occurred while importing a list"
+    }
+    assert response.status_code == 500

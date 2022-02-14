@@ -18,7 +18,14 @@ from models.List import List
 from models.Subscription import Subscription
 
 from typing import Optional
-from pydantic import BaseModel, BaseSettings, EmailStr, HttpUrl, validator
+from pydantic import (
+    BaseModel,
+    BaseSettings,
+    EmailStr,
+    HttpUrl,
+    conlist,
+    validator,
+)
 
 
 class Settings(BaseSettings):
@@ -648,3 +655,44 @@ def get_confirm_link(subscription_id):
 
 def get_unsubscribe_link(subscription_id):
     return f"{BASE_URL}/unsubscribe/{subscription_id}"
+
+
+class ListImportPayload(BaseModel):
+    list_id: UUID
+    emails: conlist(EmailStr, min_items=1, max_items=10000)
+
+    class Config:
+        extra = "forbid"
+
+
+@app.post("/listimport")
+def email_list_import(
+    list_import_payload: ListImportPayload,
+    response: Response,
+    session: Session = Depends(get_db),
+    _authorized: bool = Depends(verify_token),
+):
+    """Imports a list"""
+    try:
+        _ = session.query(List).filter(List.id == list_import_payload.list_id).one()
+        session.add_all(
+            [
+                Subscription(
+                    email=email, confirmed=True, list_id=list_import_payload.list_id
+                )
+                for email in list_import_payload.emails
+            ]
+        )
+        session.commit()
+    except NoResultFound as error:
+        log.error(error)
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return {"error": "list not found"}
+    except SQLAlchemyError as error:
+        log.error(error)
+        metrics.add_metric(name="ListEmailImportError", unit=MetricUnit.Count, value=1)
+        metrics.add_metadata(key="list_id", value=str(list_import_payload.list_id))
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"error": "An unknown error occurred while importing a list"}
+    else:
+        return {"status": "OK"}
