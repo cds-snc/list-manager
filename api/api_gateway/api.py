@@ -95,7 +95,7 @@ def healthcheck(session: Session = Depends(get_db)):
     return {"database": db_status}
 
 
-class ListPayload(BaseModel):
+class ListCreatePayload(BaseModel):
     name: str
     language: str
     service_id: str
@@ -120,6 +120,12 @@ class ListPayload(BaseModel):
 
     class Config:
         extra = "forbid"
+
+
+class ListUpdatePayload(ListCreatePayload):
+    name: Optional[str] = None
+    language: Optional[str] = None
+    service_id: Optional[str] = None
 
 
 @app.get("/lists")
@@ -207,7 +213,7 @@ def get_list_counts(
 
 @app.post("/list")
 def create_list(
-    list_payload: ListPayload,
+    list_create_payload: ListCreatePayload,
     response: Response,
     session: Session = Depends(get_db),
     _authorized: bool = Depends(verify_token),
@@ -215,16 +221,20 @@ def create_list(
 
     try:
         list = List(
-            name=list_payload.name,
-            language=list_payload.language,
-            service_id=list_payload.service_id,
-            subscribe_email_template_id=str(list_payload.subscribe_email_template_id),
-            unsubscribe_email_template_id=str(
-                list_payload.unsubscribe_email_template_id
+            name=list_create_payload.name,
+            language=list_create_payload.language,
+            service_id=list_create_payload.service_id,
+            subscribe_email_template_id=str(
+                list_create_payload.subscribe_email_template_id
             ),
-            subscribe_phone_template_id=str(list_payload.subscribe_phone_template_id),
+            unsubscribe_email_template_id=str(
+                list_create_payload.unsubscribe_email_template_id
+            ),
+            subscribe_phone_template_id=str(
+                list_create_payload.subscribe_phone_template_id
+            ),
             unsubscribe_phone_template_id=str(
-                list_payload.unsubscribe_phone_template_id
+                list_create_payload.unsubscribe_phone_template_id
             ),
         )
         session.add(list)
@@ -234,17 +244,16 @@ def create_list(
         metrics.add_metadata(key="list_id", value=str(list.id))
         return {"id": list.id}
     except SQLAlchemyError as err:
-        log.error(err)
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         metrics.add_metric(name="ListCreateError", unit=MetricUnit.Count, value=1)
-        metrics.add_metadata(key="list_id", value=list_payload.name)
+        metrics.add_metadata(key="list_id", value=list_create_payload.name)
         return {"error": f"error saving list: {err}"}
 
 
 @app.put("/list/{list_id}")
 def update_list(
     list_id,
-    list_payload: ListPayload,
+    list_update_payload: ListUpdatePayload,
     response: Response,
     session: Session = Depends(get_db),
     _authorized: bool = Depends(verify_token),
@@ -260,7 +269,7 @@ def update_list(
     try:
 
         session.query(List).filter(List.id == list.id).update(
-            list_payload.dict(exclude_unset=True)
+            list_update_payload.dict(exclude_unset=True)
         )
 
         session.commit()

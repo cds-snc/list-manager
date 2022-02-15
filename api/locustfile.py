@@ -1,13 +1,9 @@
 from locust import HttpUser, task
 import uuid
 import json
-from os import environ
 
 
 class APIUser(HttpUser):
-    def on_start(self):
-        self.client.headers = {"Authorization": environ.get("API_AUTH_TOKEN")}
-
     @task
     def run_flow(self):
         list = {
