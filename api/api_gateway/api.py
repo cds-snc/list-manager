@@ -150,7 +150,7 @@ def lists(session: Session = Depends(get_db)) -> list[ListGetPayload]:
             lambda l: {
                 key: getattr(l, key)
                 for key in ListGetPayload.__fields__
-                if key in l.__dict__.keys() and getattr(l, key) is not None
+                if getattr(l, key) is not None and key in l.__dict__.keys()
             },
             lists,
         )
