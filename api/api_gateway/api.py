@@ -135,16 +135,22 @@ class ListUpdatePayload(ListCreatePayload):
     service_id: Optional[str] = None
 
 
+class ListGetPayload(ListCreatePayload):
+    id: str
+
+    class Config:
+        extra = "forbid"
+
+
 @app.get("/lists")
-def lists(session: Session = Depends(get_db)):
+def lists(session: Session = Depends(get_db)) -> list[ListGetPayload]:
     lists = session.query(List).all()
     return list(
         map(
             lambda l: {
-                "id": str(l.id),
-                "language": l.language,
-                "name": l.name,
-                "service": l.service_id,
+                key: getattr(l, key)
+                for key in ListGetPayload.__fields__
+                if key in l.__dict__.keys() and getattr(l, key) is not None
             },
             lists,
         )
@@ -160,7 +166,7 @@ def lists_by_service(service_id, session: Session = Depends(get_db)):
                 "id": str(l.id),
                 "language": l.language,
                 "name": l.name,
-                "service": l.service_id,
+                "service_id": l.service_id,
             },
             lists,
         )

@@ -45,6 +45,18 @@ def list_fixture(session):
     return list
 
 
+@pytest.fixture(scope="function")
+def list_fixture_required_data_only(session):
+    list = List(
+        name="fixture_name_required",
+        language="fixture_language_required",
+        service_id="fixture_service_id_required",
+    )
+    session.add(list)
+    session.commit()
+    return list
+
+
 @pytest.fixture(scope="session")
 def list_count_fixture_0(session):
     list = List(
