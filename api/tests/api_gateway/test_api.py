@@ -433,7 +433,9 @@ def test_return_all_lists_with_additional_data(
     assert response.status_code == 200
 
 
-def test_return_lists_with_one_containing_only_required_data(list_fixture_required_data_only):
+def test_return_lists_with_one_containing_only_required_data(
+    list_fixture_required_data_only,
+):
     response = client.get("/lists")
     assert {
         "id": str(list_fixture_required_data_only.id),
