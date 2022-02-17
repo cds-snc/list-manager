@@ -394,31 +394,67 @@ def test_get_unsubscribe_event_with_correct_id_notify_error(
 
 def test_return_all_lists(list_fixture, list_fixture_with_redirects):
     response = client.get("/lists")
+    data = response.json()
+    assert len(data) == 2
+    assert str(list_fixture.id) in data[0].values()
+    assert str(list_fixture_with_redirects.id) in data[1].values()
+    assert response.status_code == 200
+
+
+def test_return_all_lists_with_additional_data(
+    list_fixture, list_fixture_with_redirects
+):
+    response = client.get("/lists")
     assert response.json() == [
         {
             "id": str(list_fixture.id),
             "language": list_fixture.language,
             "name": list_fixture.name,
-            "service": list_fixture.service_id,
+            "service_id": list_fixture.service_id,
+            "subscribe_email_template_id": list_fixture.subscribe_email_template_id,
+            "unsubscribe_email_template_id": list_fixture.unsubscribe_email_template_id,
+            "subscribe_phone_template_id": list_fixture.subscribe_phone_template_id,
+            "unsubscribe_phone_template_id": list_fixture.unsubscribe_phone_template_id,
         },
         {
             "id": str(list_fixture_with_redirects.id),
             "language": list_fixture_with_redirects.language,
             "name": list_fixture_with_redirects.name,
-            "service": list_fixture_with_redirects.service_id,
+            "service_id": list_fixture_with_redirects.service_id,
+            "subscribe_email_template_id": list_fixture_with_redirects.subscribe_email_template_id,
+            "unsubscribe_email_template_id": list_fixture_with_redirects.unsubscribe_email_template_id,
+            "subscribe_phone_template_id": list_fixture_with_redirects.subscribe_phone_template_id,
+            "unsubscribe_phone_template_id": list_fixture_with_redirects.unsubscribe_phone_template_id,
+            "subscribe_redirect_url": list_fixture_with_redirects.subscribe_redirect_url,
+            "confirm_redirect_url": list_fixture_with_redirects.confirm_redirect_url,
+            "unsubscribe_redirect_url": list_fixture_with_redirects.unsubscribe_redirect_url,
         },
     ]
     assert response.status_code == 200
 
 
-def test_return_lists_by_service(list_fixture, list_fixture_with_redirects):
+def test_return_lists_with_one_containing_only_required_data(
+    list_fixture_required_data_only,
+):
+    response = client.get("/lists")
+    assert {
+        "id": str(list_fixture_required_data_only.id),
+        "language": list_fixture_required_data_only.language,
+        "name": list_fixture_required_data_only.name,
+        "service_id": list_fixture_required_data_only.service_id,
+    } in response.json()
+
+    assert response.status_code == 200
+
+
+def test_return_lists_by_service(list_fixture):
     response = client.get(f"/lists/{list_fixture.service_id}")
     assert response.json() == [
         {
             "id": str(list_fixture.id),
             "language": list_fixture.language,
             "name": list_fixture.name,
-            "service": list_fixture.service_id,
+            "service_id": list_fixture.service_id,
         }
     ]
     assert response.status_code == 200
