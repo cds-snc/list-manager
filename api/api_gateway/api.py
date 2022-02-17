@@ -249,6 +249,9 @@ def create_list(
             unsubscribe_phone_template_id=str(
                 list_create_payload.unsubscribe_phone_template_id
             ),
+            subscribe_redirect_url=str(list_create_payload.subscribe_redirect_url),
+            confirm_redirect_url=str(list_create_payload.confirm_redirect_url),
+            unsubscribe_redirect_url=str(list_create_payload.unsubscribe_redirect_url),
         )
         session.add(list)
         session.commit()
