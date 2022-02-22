@@ -1,6 +1,7 @@
 from os import environ
 from fastapi import Depends, FastAPI, HTTPException, Response, Request, status
 from fastapi.responses import RedirectResponse
+from fastapi.middleware.cors import CORSMiddleware
 from clients.notify import NotificationsAPIClient
 from requests import HTTPError
 from sqlalchemy.exc import SQLAlchemyError, NoResultFound
@@ -57,6 +58,22 @@ app = FastAPI(
     version="0.0.1",
     openapi_url=settings.openapi_url,
 )
+
+origins = [
+    "http://localhost",
+    "http://localhost:3000",
+    "http://localhost:8000"
+    "http://localhost:8080",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 metrics = Metrics(namespace="ListManager", service="api")
 
 
