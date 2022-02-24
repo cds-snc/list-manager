@@ -123,6 +123,7 @@ class ListCreatePayload(BaseModel):
         "unsubscribe_redirect_url",
         "subscribe_redirect_url",
         pre=True,
+        allow_reuse=True,
     )
     def blank_string(value, field):
         if value == "":
