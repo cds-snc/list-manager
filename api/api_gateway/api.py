@@ -27,6 +27,8 @@ from pydantic import (
     validator,
 )
 
+import logging
+
 
 class Settings(BaseSettings):
     openapi_url: str = environ.get("OPENAPI_URL", "")
@@ -137,6 +139,7 @@ class ListUpdatePayload(ListCreatePayload):
 
 class ListGetPayload(ListCreatePayload):
     id: str
+    count_1: str
 
     class Config:
         extra = "forbid"
@@ -144,13 +147,58 @@ class ListGetPayload(ListCreatePayload):
 
 @app.get("/lists")
 def lists(session: Session = Depends(get_db)) -> list[ListGetPayload]:
-    lists = session.query(List).all()
+    lists = (
+        session.query(
+            List.id.label("id"),
+            List.name.label("name"),
+            List.language.label("language"),
+            List.service_id.label("service_id"),
+            List.active.label("active"),
+            List.subscribe_email_template_id.label("subscribe_email_template_id"),
+            List.unsubscribe_email_template_id.label("unsubscribe_email_template_id"),
+            List.subscribe_phone_template_id.label("subscribe_phone_template_id"),
+            List.unsubscribe_phone_template_id.label("unsubscribe_phone_template_id"),
+            List.subscribe_redirect_url.label("subscribe_redirect_url"),
+            List.confirm_redirect_url.label("confirm_redirect_url"),
+            List.unsubscribe_redirect_url.label("unsubscribe_redirect_url"),
+            List.confirm_redirect_url.label("confirm_redirect_url"),
+            func.count(Subscription.id).label("subscriber_count"),
+        )
+        .outerjoin(Subscription)
+        .group_by(
+            List.id,
+            List.name,
+            List.language,
+            List.service_id,
+            List.active,
+            List.subscribe_email_template_id,
+            List.unsubscribe_email_template_id,
+            List.subscribe_phone_template_id,
+            List.unsubscribe_phone_template_id,
+            List.subscribe_redirect_url,
+            List.unsubscribe_redirect_url,
+            List.confirm_redirect_url,
+        )
+        .all()
+    )
+
     return list(
         map(
             lambda l: {
-                key: getattr(l, key)
-                for key in ListGetPayload.__fields__
-                if getattr(l, key) is not None and key in l.__dict__.keys()
+                "id": str(l.id),
+                "name": l.name,
+                "language": l.language,
+                "service_id": l.service_id,
+                "active": l.active,
+                "subscribe_email_template_id": l.subscribe_email_template_id,
+                "unsubscribe_email_template_id": l.unsubscribe_email_template_id,
+                "subscribe_phone_template_id": l.subscribe_phone_template_id,
+                "subscribe_phone_template_id": l.subscribe_phone_template_id,
+                "unsubscribe_phone_template_id": l.unsubscribe_phone_template_id,
+                "subscribe_redirect_url": l.subscribe_redirect_url,
+                "unsubscribe_redirect_url": l.unsubscribe_redirect_url,
+                "confirm_redirect_url": l.confirm_redirect_url,
+                "subscriber_count": l.subscriber_count,
             },
             lists,
         )
