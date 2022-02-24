@@ -190,7 +190,6 @@ def lists(session: Session = Depends(get_db)) -> list[ListGetPayload]:
                 "subscribe_email_template_id": l.subscribe_email_template_id,
                 "unsubscribe_email_template_id": l.unsubscribe_email_template_id,
                 "subscribe_phone_template_id": l.subscribe_phone_template_id,
-                "subscribe_phone_template_id": l.subscribe_phone_template_id,
                 "unsubscribe_phone_template_id": l.unsubscribe_phone_template_id,
                 "subscribe_redirect_url": l.subscribe_redirect_url,
                 "unsubscribe_redirect_url": l.unsubscribe_redirect_url,
