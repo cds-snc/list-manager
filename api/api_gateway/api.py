@@ -149,19 +149,19 @@ class ListGetPayload(ListCreatePayload):
 def lists(session: Session = Depends(get_db)) -> list[ListGetPayload]:
     lists = (
         session.query(
-            List.id.label("id"),
-            List.name.label("name"),
-            List.language.label("language"),
-            List.service_id.label("service_id"),
-            List.active.label("active"),
-            List.subscribe_email_template_id.label("subscribe_email_template_id"),
-            List.unsubscribe_email_template_id.label("unsubscribe_email_template_id"),
-            List.subscribe_phone_template_id.label("subscribe_phone_template_id"),
-            List.unsubscribe_phone_template_id.label("unsubscribe_phone_template_id"),
-            List.subscribe_redirect_url.label("subscribe_redirect_url"),
-            List.confirm_redirect_url.label("confirm_redirect_url"),
-            List.unsubscribe_redirect_url.label("unsubscribe_redirect_url"),
-            List.confirm_redirect_url.label("confirm_redirect_url"),
+            List.id,
+            List.name,
+            List.language,
+            List.service_id,
+            List.active,
+            List.subscribe_email_template_id,
+            List.unsubscribe_email_template_id,
+            List.subscribe_phone_template_id,
+            List.unsubscribe_phone_template_id,
+            List.subscribe_redirect_url,
+            List.confirm_redirect_url,
+            List.unsubscribe_redirect_url,
+            List.confirm_redirect_url,
             func.count(Subscription.id).label("subscriber_count"),
         )
         .outerjoin(Subscription)
