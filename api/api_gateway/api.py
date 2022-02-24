@@ -27,8 +27,6 @@ from pydantic import (
     validator,
 )
 
-import logging
-
 
 class Settings(BaseSettings):
     openapi_url: str = environ.get("OPENAPI_URL", "")
@@ -139,7 +137,6 @@ class ListUpdatePayload(ListCreatePayload):
 
 class ListGetPayload(ListCreatePayload):
     id: str
-    count_1: str
 
     class Config:
         extra = "forbid"
