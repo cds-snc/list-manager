@@ -1,4 +1,5 @@
 from os import environ
+from uuid import UUID
 from fastapi import Depends, FastAPI, HTTPException, Response, Request, status
 from fastapi.responses import RedirectResponse
 from clients.notify import NotificationsAPIClient
@@ -9,7 +10,6 @@ from sqlalchemy.orm import Session
 from sqlalchemy import String
 from database.db import db_session
 from logger import log
-from uuid import UUID
 
 from aws_lambda_powertools import Metrics
 from aws_lambda_powertools.metrics import MetricUnit
@@ -106,13 +106,28 @@ class ListCreatePayload(BaseModel):
     name: str
     language: str
     service_id: str
-    subscribe_email_template_id: Optional[UUID] = None
-    unsubscribe_email_template_id: Optional[UUID] = None
-    subscribe_phone_template_id: Optional[UUID] = None
-    unsubscribe_phone_template_id: Optional[UUID] = None
-    subscribe_redirect_url: Optional[HttpUrl] = None
-    confirm_redirect_url: Optional[HttpUrl] = None
-    unsubscribe_redirect_url: Optional[HttpUrl] = None
+    subscribe_email_template_id: Optional[UUID]
+    unsubscribe_email_template_id: Optional[UUID]
+    subscribe_phone_template_id: Optional[UUID]
+    unsubscribe_phone_template_id: Optional[UUID]
+    subscribe_redirect_url: Optional[HttpUrl]
+    confirm_redirect_url: Optional[HttpUrl]
+    unsubscribe_redirect_url: Optional[HttpUrl]
+
+    @validator(
+        "subscribe_email_template_id",
+        "unsubscribe_email_template_id",
+        "subscribe_phone_template_id",
+        "unsubscribe_phone_template_id",
+        "confirm_redirect_url",
+        "unsubscribe_redirect_url",
+        "subscribe_redirect_url",
+        pre=True,
+    )
+    def blank_string(value, field):
+        if value == "":
+            return None
+        return value
 
     @validator(
         "subscribe_redirect_url",
@@ -121,6 +136,8 @@ class ListCreatePayload(BaseModel):
         allow_reuse=True,
     )
     def redirect_url_in_allow_list(cls, v):
+        if v is None:
+            return v
         if v.host not in REDIRECT_ALLOW_LIST:
             raise ValueError("domain must be in REDIRECT_ALLOW_LIST")
         return v
@@ -231,27 +248,18 @@ def create_list(
     session: Session = Depends(get_db),
     _authorized: bool = Depends(verify_token),
 ):
-
     try:
         list = List(
             name=list_create_payload.name,
             language=list_create_payload.language,
             service_id=list_create_payload.service_id,
-            subscribe_email_template_id=str(
-                list_create_payload.subscribe_email_template_id
-            ),
-            unsubscribe_email_template_id=str(
-                list_create_payload.unsubscribe_email_template_id
-            ),
-            subscribe_phone_template_id=str(
-                list_create_payload.subscribe_phone_template_id
-            ),
-            unsubscribe_phone_template_id=str(
-                list_create_payload.unsubscribe_phone_template_id
-            ),
-            subscribe_redirect_url=str(list_create_payload.subscribe_redirect_url),
-            confirm_redirect_url=str(list_create_payload.confirm_redirect_url),
-            unsubscribe_redirect_url=str(list_create_payload.unsubscribe_redirect_url),
+            subscribe_email_template_id=list_create_payload.subscribe_email_template_id,
+            unsubscribe_email_template_id=list_create_payload.unsubscribe_email_template_id,
+            subscribe_phone_template_id=list_create_payload.subscribe_phone_template_id,
+            unsubscribe_phone_template_id=list_create_payload.unsubscribe_phone_template_id,
+            subscribe_redirect_url=list_create_payload.subscribe_redirect_url,
+            confirm_redirect_url=list_create_payload.confirm_redirect_url,
+            unsubscribe_redirect_url=list_create_payload.unsubscribe_redirect_url,
         )
         session.add(list)
         session.commit()
