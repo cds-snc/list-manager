@@ -396,8 +396,12 @@ def test_return_all_lists(list_fixture, list_fixture_with_redirects):
     response = client.get("/lists")
     data = response.json()
     assert len(data) == 2
-    assert str(list_fixture.id) in data[0].values()
-    assert str(list_fixture_with_redirects.id) in data[1].values()
+
+    assert find_item_in_dict_list(data, "id", str(list_fixture.id)) is not None
+    assert (
+        find_item_in_dict_list(data, "id", str(list_fixture_with_redirects.id))
+        is not None
+    )
     assert response.status_code == 200
 
 
@@ -1026,12 +1030,8 @@ def subscribe_users(session, user_list, fixture):
         session.commit()
 
 
-def find_item_by_id(data, item_id):
-    item = [element for element in data if element["list_id"] == item_id]
-    if len(item) == 0:
-        return []
-
-    return item[0]
+def find_item_in_dict_list(data, identifier, value):
+    return next((item for item in data if item[identifier] == value), None)
 
 
 @patch("api_gateway.api.get_notify_client")
@@ -1094,10 +1094,14 @@ def test_counts_when_list_has_subscribers(
     assert len(data) == 2
 
     # check list 1
-    assert find_item_by_id(data, str(list_count_fixture_1.id))["subscriber_count"] == 2
+    item = find_item_in_dict_list(data, "list_id", str(list_count_fixture_1.id))
+    assert item is not None
+    assert item["subscriber_count"] == 2
 
     # check list 2
-    assert find_item_by_id(data, str(list_count_fixture_2.id))["subscriber_count"] == 3
+    item = find_item_in_dict_list(data, "list_id", str(list_count_fixture_2.id))
+    assert item is not None
+    assert item["subscriber_count"] == 3
 
 
 @patch("api_gateway.api.get_notify_client")
@@ -1125,7 +1129,9 @@ def test_unique_counts_for_list_subscribers(
     data = response.json()
 
     # check list 1
-    assert find_item_by_id(data, str(list_count_fixture_1.id))["subscriber_count"] == 2
+    item = find_item_in_dict_list(data, "list_id", str(list_count_fixture_1.id))
+    assert item is not None
+    assert item["subscriber_count"] == 2
 
 
 @patch("api_gateway.api.get_notify_client")
