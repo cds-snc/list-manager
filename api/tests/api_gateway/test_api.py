@@ -409,10 +409,13 @@ def test_return_all_lists_with_additional_data(
     list_fixture, list_fixture_with_redirects
 ):
     response = client.get("/lists")
+
     response_list = find_item_in_dict_list(response.json(), "id", str(list_fixture.id))
     response_list_with_redirects = find_item_in_dict_list(
         response.json(), "id", str(list_fixture_with_redirects.id)
     )
+
+    assert len(response.json()) == 2
 
     assert response_list == json.loads(
         json.dumps(
