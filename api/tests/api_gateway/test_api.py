@@ -409,31 +409,44 @@ def test_return_all_lists_with_additional_data(
     list_fixture, list_fixture_with_redirects
 ):
     response = client.get("/lists")
-    assert response.json() == [
-        {
-            "id": str(list_fixture.id),
-            "language": list_fixture.language,
-            "name": list_fixture.name,
-            "service_id": list_fixture.service_id,
-            "subscribe_email_template_id": list_fixture.subscribe_email_template_id,
-            "unsubscribe_email_template_id": list_fixture.unsubscribe_email_template_id,
-            "subscribe_phone_template_id": list_fixture.subscribe_phone_template_id,
-            "unsubscribe_phone_template_id": list_fixture.unsubscribe_phone_template_id,
-        },
-        {
-            "id": str(list_fixture_with_redirects.id),
-            "language": list_fixture_with_redirects.language,
-            "name": list_fixture_with_redirects.name,
-            "service_id": list_fixture_with_redirects.service_id,
-            "subscribe_email_template_id": list_fixture_with_redirects.subscribe_email_template_id,
-            "unsubscribe_email_template_id": list_fixture_with_redirects.unsubscribe_email_template_id,
-            "subscribe_phone_template_id": list_fixture_with_redirects.subscribe_phone_template_id,
-            "unsubscribe_phone_template_id": list_fixture_with_redirects.unsubscribe_phone_template_id,
-            "subscribe_redirect_url": list_fixture_with_redirects.subscribe_redirect_url,
-            "confirm_redirect_url": list_fixture_with_redirects.confirm_redirect_url,
-            "unsubscribe_redirect_url": list_fixture_with_redirects.unsubscribe_redirect_url,
-        },
-    ]
+    response_list = find_item_in_dict_list(response.json(), "id", str(list_fixture.id))
+    response_list_with_redirects = find_item_in_dict_list(
+        response.json(), "id", str(list_fixture_with_redirects.id)
+    )
+
+    assert response_list == json.loads(
+        json.dumps(
+            {
+                "id": str(list_fixture.id),
+                "language": list_fixture.language,
+                "name": list_fixture.name,
+                "service_id": list_fixture.service_id,
+                "subscribe_email_template_id": list_fixture.subscribe_email_template_id,
+                "unsubscribe_email_template_id": list_fixture.unsubscribe_email_template_id,
+                "subscribe_phone_template_id": list_fixture.subscribe_phone_template_id,
+                "unsubscribe_phone_template_id": list_fixture.unsubscribe_phone_template_id,
+            }
+        )
+    )
+
+    assert response_list_with_redirects == json.loads(
+        json.dumps(
+            {
+                "id": str(list_fixture_with_redirects.id),
+                "language": list_fixture_with_redirects.language,
+                "name": list_fixture_with_redirects.name,
+                "service_id": list_fixture_with_redirects.service_id,
+                "subscribe_email_template_id": list_fixture_with_redirects.subscribe_email_template_id,
+                "unsubscribe_email_template_id": list_fixture_with_redirects.unsubscribe_email_template_id,
+                "subscribe_phone_template_id": list_fixture_with_redirects.subscribe_phone_template_id,
+                "unsubscribe_phone_template_id": list_fixture_with_redirects.unsubscribe_phone_template_id,
+                "subscribe_redirect_url": list_fixture_with_redirects.subscribe_redirect_url,
+                "confirm_redirect_url": list_fixture_with_redirects.confirm_redirect_url,
+                "unsubscribe_redirect_url": list_fixture_with_redirects.unsubscribe_redirect_url,
+            }
+        )
+    )
+
     assert response.status_code == 200
 
 
