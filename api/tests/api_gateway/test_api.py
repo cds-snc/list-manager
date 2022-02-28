@@ -428,6 +428,7 @@ def test_return_all_lists_with_additional_data(
                 "unsubscribe_email_template_id": list_fixture.unsubscribe_email_template_id,
                 "subscribe_phone_template_id": list_fixture.subscribe_phone_template_id,
                 "unsubscribe_phone_template_id": list_fixture.unsubscribe_phone_template_id,
+                "subscriber_count": 8,
             }
         )
     )
@@ -446,6 +447,7 @@ def test_return_all_lists_with_additional_data(
                 "subscribe_redirect_url": list_fixture_with_redirects.subscribe_redirect_url,
                 "confirm_redirect_url": list_fixture_with_redirects.confirm_redirect_url,
                 "unsubscribe_redirect_url": list_fixture_with_redirects.unsubscribe_redirect_url,
+                "subscriber_count": 2,
             }
         )
     )
@@ -462,6 +464,7 @@ def test_return_lists_with_one_containing_only_required_data(
         "language": list_fixture_required_data_only.language,
         "name": list_fixture_required_data_only.name,
         "service_id": list_fixture_required_data_only.service_id,
+        "subscriber_count": 0,
     } in response.json()
 
     assert response.status_code == 200
