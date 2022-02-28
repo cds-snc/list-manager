@@ -171,6 +171,7 @@ class ListUpdatePayload(ListCreatePayload):
 
 class ListGetPayload(ListCreatePayload):
     id: str
+    subscriber_count: str
 
     class Config:
         extra = "forbid"
