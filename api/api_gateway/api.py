@@ -144,13 +144,47 @@ class ListGetPayload(ListCreatePayload):
 
 @app.get("/lists")
 def lists(session: Session = Depends(get_db)) -> list[ListGetPayload]:
-    lists = session.query(List).all()
+    lists = (
+        session.query(
+            List.id,
+            List.name,
+            List.language,
+            List.service_id,
+            List.active,
+            List.subscribe_email_template_id,
+            List.unsubscribe_email_template_id,
+            List.subscribe_phone_template_id,
+            List.unsubscribe_phone_template_id,
+            List.subscribe_redirect_url,
+            List.confirm_redirect_url,
+            List.unsubscribe_redirect_url,
+            List.confirm_redirect_url,
+            func.count(Subscription.id).label("subscriber_count"),
+        )
+        .outerjoin(Subscription)
+        .group_by(
+            List.id,
+            List.name,
+            List.language,
+            List.service_id,
+            List.active,
+            List.subscribe_email_template_id,
+            List.unsubscribe_email_template_id,
+            List.subscribe_phone_template_id,
+            List.unsubscribe_phone_template_id,
+            List.subscribe_redirect_url,
+            List.unsubscribe_redirect_url,
+            List.confirm_redirect_url,
+        )
+        .all()
+    )
+
     return list(
         map(
             lambda l: {
                 key: getattr(l, key)
                 for key in ListGetPayload.__fields__
-                if getattr(l, key) is not None and key in l.__dict__.keys()
+                if getattr(l, key) is not None
             },
             lists,
         )
