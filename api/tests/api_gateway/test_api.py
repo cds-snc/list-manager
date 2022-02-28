@@ -396,8 +396,12 @@ def test_return_all_lists(list_fixture, list_fixture_with_redirects):
     response = client.get("/lists")
     data = response.json()
     assert len(data) == 2
-    assert str(list_fixture.id) in data[0].values()
-    assert str(list_fixture_with_redirects.id) in data[1].values()
+
+    assert find_item_in_dict_list(data, "id", str(list_fixture.id)) is not None
+    assert (
+        find_item_in_dict_list(data, "id", str(list_fixture_with_redirects.id))
+        is not None
+    )
     assert response.status_code == 200
 
 
@@ -405,31 +409,47 @@ def test_return_all_lists_with_additional_data(
     list_fixture, list_fixture_with_redirects
 ):
     response = client.get("/lists")
-    assert response.json() == [
-        {
-            "id": str(list_fixture.id),
-            "language": list_fixture.language,
-            "name": list_fixture.name,
-            "service_id": list_fixture.service_id,
-            "subscribe_email_template_id": list_fixture.subscribe_email_template_id,
-            "unsubscribe_email_template_id": list_fixture.unsubscribe_email_template_id,
-            "subscribe_phone_template_id": list_fixture.subscribe_phone_template_id,
-            "unsubscribe_phone_template_id": list_fixture.unsubscribe_phone_template_id,
-        },
-        {
-            "id": str(list_fixture_with_redirects.id),
-            "language": list_fixture_with_redirects.language,
-            "name": list_fixture_with_redirects.name,
-            "service_id": list_fixture_with_redirects.service_id,
-            "subscribe_email_template_id": list_fixture_with_redirects.subscribe_email_template_id,
-            "unsubscribe_email_template_id": list_fixture_with_redirects.unsubscribe_email_template_id,
-            "subscribe_phone_template_id": list_fixture_with_redirects.subscribe_phone_template_id,
-            "unsubscribe_phone_template_id": list_fixture_with_redirects.unsubscribe_phone_template_id,
-            "subscribe_redirect_url": list_fixture_with_redirects.subscribe_redirect_url,
-            "confirm_redirect_url": list_fixture_with_redirects.confirm_redirect_url,
-            "unsubscribe_redirect_url": list_fixture_with_redirects.unsubscribe_redirect_url,
-        },
-    ]
+
+    response_list = find_item_in_dict_list(response.json(), "id", str(list_fixture.id))
+    response_list_with_redirects = find_item_in_dict_list(
+        response.json(), "id", str(list_fixture_with_redirects.id)
+    )
+
+    assert len(response.json()) == 2
+
+    assert response_list == json.loads(
+        json.dumps(
+            {
+                "id": str(list_fixture.id),
+                "language": list_fixture.language,
+                "name": list_fixture.name,
+                "service_id": list_fixture.service_id,
+                "subscribe_email_template_id": list_fixture.subscribe_email_template_id,
+                "unsubscribe_email_template_id": list_fixture.unsubscribe_email_template_id,
+                "subscribe_phone_template_id": list_fixture.subscribe_phone_template_id,
+                "unsubscribe_phone_template_id": list_fixture.unsubscribe_phone_template_id,
+            }
+        )
+    )
+
+    assert response_list_with_redirects == json.loads(
+        json.dumps(
+            {
+                "id": str(list_fixture_with_redirects.id),
+                "language": list_fixture_with_redirects.language,
+                "name": list_fixture_with_redirects.name,
+                "service_id": list_fixture_with_redirects.service_id,
+                "subscribe_email_template_id": list_fixture_with_redirects.subscribe_email_template_id,
+                "unsubscribe_email_template_id": list_fixture_with_redirects.unsubscribe_email_template_id,
+                "subscribe_phone_template_id": list_fixture_with_redirects.subscribe_phone_template_id,
+                "unsubscribe_phone_template_id": list_fixture_with_redirects.unsubscribe_phone_template_id,
+                "subscribe_redirect_url": list_fixture_with_redirects.subscribe_redirect_url,
+                "confirm_redirect_url": list_fixture_with_redirects.confirm_redirect_url,
+                "unsubscribe_redirect_url": list_fixture_with_redirects.unsubscribe_redirect_url,
+            }
+        )
+    )
+
     assert response.status_code == 200
 
 
@@ -1026,12 +1046,8 @@ def subscribe_users(session, user_list, fixture):
         session.commit()
 
 
-def find_item_by_id(data, item_id):
-    item = [element for element in data if element["list_id"] == item_id]
-    if len(item) == 0:
-        return []
-
-    return item[0]
+def find_item_in_dict_list(data, identifier, value):
+    return next((item for item in data if item[identifier] == value), None)
 
 
 @patch("api_gateway.api.get_notify_client")
@@ -1094,10 +1110,14 @@ def test_counts_when_list_has_subscribers(
     assert len(data) == 2
 
     # check list 1
-    assert find_item_by_id(data, str(list_count_fixture_1.id))["subscriber_count"] == 2
+    item = find_item_in_dict_list(data, "list_id", str(list_count_fixture_1.id))
+    assert item is not None
+    assert item["subscriber_count"] == 2
 
     # check list 2
-    assert find_item_by_id(data, str(list_count_fixture_2.id))["subscriber_count"] == 3
+    item = find_item_in_dict_list(data, "list_id", str(list_count_fixture_2.id))
+    assert item is not None
+    assert item["subscriber_count"] == 3
 
 
 @patch("api_gateway.api.get_notify_client")
@@ -1125,7 +1145,9 @@ def test_unique_counts_for_list_subscribers(
     data = response.json()
 
     # check list 1
-    assert find_item_by_id(data, str(list_count_fixture_1.id))["subscriber_count"] == 2
+    item = find_item_in_dict_list(data, "list_id", str(list_count_fixture_1.id))
+    assert item is not None
+    assert item["subscriber_count"] == 2
 
 
 @patch("api_gateway.api.get_notify_client")

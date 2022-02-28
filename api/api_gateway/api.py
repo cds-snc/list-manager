@@ -139,6 +139,7 @@ class ListCreatePayload(BaseModel):
         "unsubscribe_redirect_url",
         "subscribe_redirect_url",
         pre=True,
+        allow_reuse=True,
     )
     def blank_string(value, field):
         if value == "":
@@ -216,20 +217,9 @@ def lists(session: Session = Depends(get_db)) -> list[ListGetPayload]:
     return list(
         map(
             lambda l: {
-                "id": str(l.id),
-                "name": l.name,
-                "language": l.language,
-                "service_id": l.service_id,
-                "active": l.active,
-                "subscribe_email_template_id": l.subscribe_email_template_id,
-                "unsubscribe_email_template_id": l.unsubscribe_email_template_id,
-                "subscribe_phone_template_id": l.subscribe_phone_template_id,
-                "subscribe_phone_template_id": l.subscribe_phone_template_id,
-                "unsubscribe_phone_template_id": l.unsubscribe_phone_template_id,
-                "subscribe_redirect_url": l.subscribe_redirect_url,
-                "unsubscribe_redirect_url": l.unsubscribe_redirect_url,
-                "confirm_redirect_url": l.confirm_redirect_url,
-                "subscriber_count": l.subscriber_count,
+                key: getattr(l, key)
+                for key in ListGetPayload.__fields__
+                if getattr(l, key) is not None
             },
             lists,
         )
