@@ -13,7 +13,7 @@ class List(Base):
     __tablename__ = "lists"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name = Column(String, nullable=False, unique=True)
+    name = Column(String, nullable=False, unique=False)
     language = Column(String, nullable=False, index=False)
     active = Column(Boolean, unique=False, default=True)
     subscribe_email_template_id = Column(String)
