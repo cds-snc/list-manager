@@ -481,7 +481,7 @@ def create_subscription(
             metrics.add_metadata(key="target", value=METRICS_SMS_TARGET)
 
         if list.subscribe_redirect_url is not None:
-            return RedirectResponse(list.subscribe_redirect_url)
+            return {"id": subscription.id, "redirect_url": list.subscribe_redirect_url}
         else:
             return {"id": subscription.id}
     except SQLAlchemyError as err:
