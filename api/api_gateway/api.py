@@ -212,14 +212,48 @@ def lists(session: Session = Depends(get_db)) -> list[ListGetPayload]:
 
 @app.get("/lists/{service_id}")
 def lists_by_service(service_id, session: Session = Depends(get_db)):
-    lists = session.query(List).filter(List.service_id == service_id).all()
+    lists = (
+        session.query(
+            List.id,
+            List.name,
+            List.language,
+            List.service_id,
+            List.active,
+            List.subscribe_email_template_id,
+            List.unsubscribe_email_template_id,
+            List.subscribe_phone_template_id,
+            List.unsubscribe_phone_template_id,
+            List.subscribe_redirect_url,
+            List.confirm_redirect_url,
+            List.unsubscribe_redirect_url,
+            List.confirm_redirect_url,
+            func.count(Subscription.id).label("subscriber_count"),
+        )
+        .outerjoin(Subscription)
+        .group_by(
+            List.id,
+            List.name,
+            List.language,
+            List.service_id,
+            List.active,
+            List.subscribe_email_template_id,
+            List.unsubscribe_email_template_id,
+            List.subscribe_phone_template_id,
+            List.unsubscribe_phone_template_id,
+            List.subscribe_redirect_url,
+            List.unsubscribe_redirect_url,
+            List.confirm_redirect_url,
+        )
+        .filter(List.service_id == service_id)
+        .all()
+    )
+
     return list(
         map(
             lambda l: {
-                "id": str(l.id),
-                "language": l.language,
-                "name": l.name,
-                "service_id": l.service_id,
+                key: getattr(l, key)
+                for key in ListGetPayload.__fields__
+                if getattr(l, key) is not None
             },
             lists,
         )
