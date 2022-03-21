@@ -470,16 +470,20 @@ def test_return_lists_with_one_containing_only_required_data(
     assert response.status_code == 200
 
 
-def test_return_lists_by_service(list_fixture):
+def test_return_lists_by_service(list_fixture, list_fixture_with_redirects):
     response = client.get(f"/lists/{list_fixture.service_id}")
-    assert response.json() == [
-        {
-            "id": str(list_fixture.id),
-            "language": list_fixture.language,
-            "name": list_fixture.name,
-            "service_id": list_fixture.service_id,
-        }
-    ]
+    assert {
+        "id": str(list_fixture.id),
+        "language": list_fixture.language,
+        "name": list_fixture.name,
+        "service_id": list_fixture.service_id,
+        "subscribe_email_template_id": list_fixture_with_redirects.subscribe_email_template_id,
+        "unsubscribe_email_template_id": list_fixture_with_redirects.unsubscribe_email_template_id,
+        "subscribe_phone_template_id": list_fixture_with_redirects.subscribe_phone_template_id,
+        "unsubscribe_phone_template_id": list_fixture_with_redirects.unsubscribe_phone_template_id,
+        "subscriber_count": 8,
+    } in response.json()
+
     assert response.status_code == 200
 
 
