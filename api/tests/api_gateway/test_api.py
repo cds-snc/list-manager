@@ -911,7 +911,7 @@ def test_send_sms_only(mock_client):
         job_name="Job Name",
     )
 
-    subscriber_arr = [["phone number", "subscribe id"]] + [
+    subscriber_arr = [["phone number", "subscription id"]] + [
         [x["phone"], x["id"]] for x in subscribers if x["phone"]
     ]
 
