@@ -882,7 +882,7 @@ def test_send_emails_only(mock_client):
         job_name="Job Name",
     )
 
-    subscriber_arr = [["email address", "unsubscribe link"]] + [
+    subscriber_arr = [["email address", "unsubscribe_link"]] + [
         [x["email"], get_unsubscribe_link(str(x["id"]))]
         for x in subscribers
         if x["email"]

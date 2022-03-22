@@ -717,7 +717,7 @@ def send_bulk_notify(subscription_count, send_payload, rows, recipient_limit=500
             # Reset and add headers
             subscription_rows = []
             if template_type == "email":
-                subscription_rows.append(["email address", "unsubscribe link"])
+                subscription_rows.append(["email address", "unsubscribe_link"])
             elif template_type == "phone":
                 subscription_rows.append(["phone number", "subscription id"])
 
