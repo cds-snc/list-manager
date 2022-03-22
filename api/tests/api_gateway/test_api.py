@@ -17,7 +17,7 @@ from requests import HTTPError
 from models.List import List
 from models.Subscription import Subscription
 
-from api_gateway.api import send_bulk_notify, SendPayload
+from api_gateway.api import send_bulk_notify, SendPayload, get_unsubscribe_link
 
 client = TestClient(api.app)
 
@@ -882,8 +882,10 @@ def test_send_emails_only(mock_client):
         job_name="Job Name",
     )
 
-    subscriber_arr = [["email address", "subscription id"]] + [
-        [x["email"], x["id"]] for x in subscribers if x["email"]
+    subscriber_arr = [["email address", "unsubscribe_link"]] + [
+        [x["email"], get_unsubscribe_link(str(x["id"]))]
+        for x in subscribers
+        if x["email"]
     ]
 
     emails_sent = send_bulk_notify(len(subscribers), send_payload, subscribers)
