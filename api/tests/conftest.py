@@ -238,3 +238,50 @@ def list_to_be_updated_fixture(session):
     session.add(list)
     session.commit()
     return list
+
+
+@pytest.fixture(scope="session")
+def sub_list_counter(session):
+
+    list_array = []
+
+    for cpt in range(3):
+        list = List(
+            name="sub_list_counter{cpt}",
+            language="en",
+            service_id="fixture_service_id_sub_counter1",
+            subscribe_email_template_id="87375f47-0fb1-4459-ab36-97a5c1ba358f",
+            unsubscribe_email_template_id="b6ea8854-3f45-4f5c-808f-61612d920eb3",
+            subscribe_phone_template_id="42427c7f-d041-411d-9b92-5890cade3d9a",
+            unsubscribe_phone_template_id="rae60d25-0c83-45b7-b2ba-db208281e4e4",
+        )
+        list_array.append(list)
+       
+    session.add_all(list_array)        
+    session.commit()
+    
+
+    user_list = [
+        {"email": "list1+0@example.com", "confirmed": True},
+        {"email": "list1+1@example.com", "confirmed": True},
+        {"email": "list2+0@example.com", "confirmed": True},
+        {"email": "list2+1@example.com", "confirmed": False},
+    ]
+
+    for user in user_list:
+        subscription = Subscription(
+            email=user["email"],
+            list=list_array[0] if "list1" in user["email"] else list_array[1],
+            confirmed=user["confirmed"],
+        )
+        session.add(subscription)
+        session.commit()
+
+    for x in range(0, 3):
+        subscription = Subscription(
+            email=f"email{x}+xx@example.com", list=list_array[2], confirmed=True
+        )
+        session.add(subscription)
+        session.commit()
+
+    return tuple(list_array[0],list_array[1],list_array[2])

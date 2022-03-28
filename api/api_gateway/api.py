@@ -227,7 +227,9 @@ def lists_by_service(service_id, session: Session = Depends(get_db)):
             List.confirm_redirect_url,
             List.unsubscribe_redirect_url,
             List.confirm_redirect_url,
-            func.count(Subscription.id).label("subscriber_count"),
+             func.count(func.distinct(Subscription.email)).label(
+                "subscriber_count"
+            ),
         )
         .outerjoin(Subscription)
         .group_by(
@@ -244,7 +246,7 @@ def lists_by_service(service_id, session: Session = Depends(get_db)):
             List.unsubscribe_redirect_url,
             List.confirm_redirect_url,
         )
-        .filter(List.service_id == service_id)
+        .filter(List.service_id == service_id, Subscription.confirmed.is_(True))
         .all()
     )
 

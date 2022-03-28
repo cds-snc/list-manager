@@ -485,6 +485,44 @@ def test_return_lists_by_service(list_fixture, list_fixture_with_redirects):
     } in response.json()
 
     assert response.status_code == 200
+    
+
+def test_return_list_sub_count(sub_list_counter):
+    response = client.get(f"/lists/{sub_list_counter[0].service_id}")
+    assert response.status_code == 200
+    assert len(response.json()) == 3
+
+    # check #1
+    item = find_item_in_dict_list(data, "list_id", str(sub_list_counter[0].id))
+    assert item is not None
+    assert item["subscriber_count"] == 2
+
+    # checking #2 list
+    item = find_item_in_dict_list(data, "list_id", str(sub_list_counter[1].id))
+    assert item is not None
+    assert item["subscriber_count"] == 1
+
+    # checking #3 list
+    item = find_item_in_dict_list(data, "list_id", str(sub_list_counter[3].id))
+    assert item is not None
+    assert item["subscriber_count"] == 3
+  
+    assert {
+        "id": str(sub_list_counter[0].id),
+        "language": sub_list_counter[0].language,
+        "name": sub_list_counter[0].name,
+        "service_id": sub_list_counter[0].service_id,
+        "subscribe_email_template_id": sub_list_counter[0].subscribe_email_template_id,
+        "unsubscribe_email_template_id": sub_list_counter[
+            0
+        ].unsubscribe_email_template_id,
+        "subscribe_phone_template_id": sub_list_counter[0].subscribe_phone_template_id,
+        "unsubscribe_phone_template_id": sub_list_counter[
+            0
+        ].unsubscribe_phone_template_id,
+        "subscriber_count": 2,
+    } in response.json()
+
 
 
 def test_create_list():
