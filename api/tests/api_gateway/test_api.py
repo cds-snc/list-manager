@@ -455,11 +455,11 @@ def test_return_all_lists_with_additional_data(
     assert response.status_code == 200
 
 
-@unittest.skip("TODO : fix lists do not contain the given list ")
+@unittest.skip("TODO :lists do not contain the given list")
 def test_return_lists_with_one_containing_only_required_data(
     list_fixture_required_data_only,
 ):
-    response = client.get("/lists/")
+    response = client.get("/lists")
     assert {
         "id": str(list_fixture_required_data_only.id),
         "language": list_fixture_required_data_only.language,
