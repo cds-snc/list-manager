@@ -1,7 +1,7 @@
 from os import environ
 from uuid import UUID
 from fastapi import Depends, FastAPI, HTTPException, Response, Request, status
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, JSONResponse
 from clients.notify import NotificationsAPIClient
 from requests import HTTPError
 from sqlalchemy.exc import SQLAlchemyError, NoResultFound
@@ -58,6 +58,20 @@ app = FastAPI(
     openapi_url=settings.openapi_url,
 )
 metrics = Metrics(namespace="ListManager", service="api")
+
+
+async def exceptions_middleware(request: Request, call_next):
+    try:
+        return await call_next(request)
+    except Exception as err:
+        # catch unhandled exceptions
+        return JSONResponse(
+            status_code=500,
+            content={"message": f"Internal server error. Detail: {err}"},
+        )
+
+
+app.middleware("http")(exceptions_middleware)
 
 
 # Dependency
@@ -627,7 +641,10 @@ def unsubscribe(
         return {"error": "error deleting subscription"}
     except HTTPError as err:
         log.error(err)
-        response.status_code = status.HTTP_502_BAD_GATEWAY
+        # response.status_code = status.HTTP_502_BAD_GATEWAY
+        response.status_code = (
+            err.response.status_code if err.response else status.HTTP_502_BAD_GATEWAY
+        )  # set the true status from error
         metrics.add_metric(
             name="UnsubscriptionNotificationError", unit=MetricUnit.Count, value=1
         )
@@ -699,7 +716,6 @@ def send(
         metrics.add_metadata(key="subscription_count", value=str(subscription_count))
 
         return {"error": "error sending bulk notifications"}
-
     return {"status": "OK", "sent": sent_notifications}
 
 
