@@ -11,6 +11,10 @@ from sqlalchemy.orm import sessionmaker
 from models.List import List
 from models.Subscription import Subscription
 
+from fastapi.testclient import TestClient
+from typing import Generator, Any
+from api_gateway import api
+
 
 @pytest.fixture
 def assert_new_model_saved():
@@ -238,3 +242,39 @@ def list_to_be_updated_fixture(session):
     session.add(list)
     session.commit()
     return list
+
+
+@pytest.fixture(scope="session")
+def client() -> Generator[TestClient, Any, None]:
+
+    with TestClient(api.app) as client:
+        yield client
+
+
+@pytest.fixture(scope="function")
+def api_verify_token():
+    return api.verify_token
+
+
+@pytest.fixture(scope="function")
+def metrics():
+    from aws_lambda_powertools.metrics import MetricUnit
+
+    metric_list = [
+        "ListCreated",
+        "ListDeleted",
+        "SuccessfulSubscription",
+        "UnsubscriptionError",
+        "ConfirmationError",
+        "UnsubscriptionNotificationError",
+        "SuccessfulConfirmation",
+        "SuccessfulUnsubscription",
+        "BulkNotificationError",
+        "SubscriptionNotificationError",
+        "ListDeleteError",
+        "ListUpdateError",
+        "ListUpdated",
+        "ListCreateError",
+    ]
+    for metric in metric_list:
+        api.metrics.add_metric(name=metric, unit=MetricUnit.Count, value=0)

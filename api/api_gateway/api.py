@@ -1,3 +1,6 @@
+# pylint: disable=missing-class-docstring
+# pylint: disable=missing-function-docstring
+
 from os import environ
 from uuid import UUID
 from fastapi import Depends, FastAPI, HTTPException, Response, Request, status
