@@ -247,7 +247,7 @@ def list_to_be_updated_fixture(session):
     return list
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def client() -> Generator[TestClient, Any, None]:
 
     with TestClient(api.app) as client:
