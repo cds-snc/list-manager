@@ -180,6 +180,16 @@ class ListGetPayload(ListCreatePayload):
 
 @app.get("/lists")
 def lists(session: Session = Depends(get_db)) -> list[ListGetPayload]:
+    sub_query = (
+        session.query(
+            func.count(func.distinct(Subscription.email)).label("subscriber_count"),
+            Subscription.list_id,
+        )
+        .filter(Subscription.confirmed.is_(True))
+        .group_by(Subscription.list_id)
+        .subquery()
+    )
+
     lists = (
         session.query(
             List.id,
@@ -195,9 +205,9 @@ def lists(session: Session = Depends(get_db)) -> list[ListGetPayload]:
             List.confirm_redirect_url,
             List.unsubscribe_redirect_url,
             List.confirm_redirect_url,
-            func.count(Subscription.id).label("subscriber_count"),
+            sub_query.c.subscriber_count,
         )
-        .outerjoin(Subscription)
+        .outerjoin(sub_query, sub_query.c.list_id == List.id)
         .group_by(
             List.id,
             List.name,
@@ -211,11 +221,12 @@ def lists(session: Session = Depends(get_db)) -> list[ListGetPayload]:
             List.subscribe_redirect_url,
             List.unsubscribe_redirect_url,
             List.confirm_redirect_url,
+            sub_query.c.subscriber_count,
         )
         .all()
     )
 
-    return list(
+    sanitized_lists = list(
         map(
             lambda l: {
                 key: getattr(l, key)
@@ -226,9 +237,26 @@ def lists(session: Session = Depends(get_db)) -> list[ListGetPayload]:
         )
     )
 
+    # update the list in-place
+    for list_item in sanitized_lists:
+        if "subscriber_count" not in list_item:
+            list_item["subscriber_count"] = 0
+
+    return sanitized_lists
+
 
 @app.get("/lists/{service_id}")
 def lists_by_service(service_id, session: Session = Depends(get_db)):
+    sub_query = (
+        session.query(
+            func.count(func.distinct(Subscription.email)).label("subscriber_count"),
+            Subscription.list_id,
+        )
+        .filter(Subscription.confirmed.is_(True))
+        .group_by(Subscription.list_id)
+        .subquery()
+    )
+
     lists = (
         session.query(
             List.id,
@@ -244,9 +272,9 @@ def lists_by_service(service_id, session: Session = Depends(get_db)):
             List.confirm_redirect_url,
             List.unsubscribe_redirect_url,
             List.confirm_redirect_url,
-            func.count(Subscription.id).label("subscriber_count"),
+            sub_query.c.subscriber_count,
         )
-        .outerjoin(Subscription)
+        .outerjoin(sub_query, sub_query.c.list_id == List.id)
         .group_by(
             List.id,
             List.name,
@@ -260,12 +288,13 @@ def lists_by_service(service_id, session: Session = Depends(get_db)):
             List.subscribe_redirect_url,
             List.unsubscribe_redirect_url,
             List.confirm_redirect_url,
+            sub_query.c.subscriber_count,
         )
         .filter(List.service_id == service_id)
         .all()
     )
 
-    return list(
+    sanitized_lists = list(
         map(
             lambda l: {
                 key: getattr(l, key)
@@ -275,6 +304,12 @@ def lists_by_service(service_id, session: Session = Depends(get_db)):
             lists,
         )
     )
+    # update the list in-place
+    for list_item in sanitized_lists:
+        if "subscriber_count" not in list_item:
+            list_item["subscriber_count"] = 0
+
+    return sanitized_lists
 
 
 @app.get("/lists/{service_id}/subscriber-count/")

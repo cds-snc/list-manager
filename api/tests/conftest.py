@@ -1,3 +1,6 @@
+# pylint: disable=missing-class-docstring
+# pylint: disable=missing-function-docstring
+
 import os
 import pytest
 from unittest.mock import MagicMock
@@ -244,7 +247,7 @@ def list_to_be_updated_fixture(session):
     return list
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def client() -> Generator[TestClient, Any, None]:
 
     with TestClient(api.app) as client:
@@ -278,3 +281,49 @@ def metrics():
     ]
     for metric in metric_list:
         api.metrics.add_metric(name=metric, unit=MetricUnit.Count, value=0)
+
+
+@pytest.fixture(scope="function")
+def list_with_subscribers(session):
+
+    list1 = List(
+        name="sub_list_counter1",
+        language="en",
+        service_id="fixture_service_id_sub_counter1",
+        subscribe_email_template_id="87375f47-0fb1-4459-ab36-97a5c1ba358f",
+        unsubscribe_email_template_id="b6ea8854-3f45-4f5c-808f-61612d920eb3",
+        subscribe_phone_template_id="42427c7f-d041-411d-9b92-5890cade3d9a",
+        unsubscribe_phone_template_id="rae60d25-0c83-45b7-b2ba-db208281e4e4",
+    )
+
+    list2 = List(
+        name="sub_list_counter2",
+        language="en",
+        service_id="fixture_service_id_sub_counter1",
+        subscribe_email_template_id="87375f47-0fb1-4459-ab36-97a5c1ba358f",
+        unsubscribe_email_template_id="b6ea8854-3f45-4f5c-808f-61612d920eb3",
+        subscribe_phone_template_id="42427c7f-d041-411d-9b92-5890cade3d9a",
+        unsubscribe_phone_template_id="rae60d25-0c83-45b7-b2ba-db208281e4e4",
+    )
+
+    session.add(list1)
+    session.add(list2)
+    session.commit()
+
+    user_list = [
+        {"email": "list1+0@example.com", "confirmed": True},
+        {"email": "list1+1@example.com", "confirmed": True},
+        {"email": "list2+0@example.com", "confirmed": True},
+        {"email": "list2+1@example.com", "confirmed": False},
+    ]
+
+    for user in user_list:
+        subscription = Subscription(
+            email=user["email"],
+            list=list1 if "list1" in user["email"] else list2,
+            confirmed=user["confirmed"],
+        )
+        session.add(subscription)
+        session.commit()
+
+    return (list1, list2)
