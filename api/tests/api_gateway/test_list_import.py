@@ -7,6 +7,8 @@ from models.Subscription import Subscription
 ##
 # New List Import endpoint
 ##
+
+
 def test_email_list_import_new(session, list_to_be_updated_fixture, client):
     # Empty subscriptions table
     data = (
