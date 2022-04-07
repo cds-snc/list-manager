@@ -903,3 +903,41 @@ def test_email_list_with_unknown_error(
         },
     )
     assert response.status_code == 500
+
+
+def test_return_list_subscriber_count(list_with_subscribers, client, session):
+    response = client.get("/lists")
+    assert response.status_code == 200
+    data = response.json()
+
+    # check #1
+    item = find_item_in_dict_list(data, "id", str(list_with_subscribers[0].id))
+    assert item is not None
+    assert item["subscriber_count"] == 2
+
+    # checking #2 list
+    item = find_item_in_dict_list(data, "id", str(list_with_subscribers[1].id))
+    assert item is not None
+    assert item["subscriber_count"] == 1
+    # check details
+    assert {
+        "id": str(list_with_subscribers[0].id),
+        "language": list_with_subscribers[0].language,
+        "name": list_with_subscribers[0].name,
+        "service_id": list_with_subscribers[0].service_id,
+        "subscribe_email_template_id": list_with_subscribers[
+            0
+        ].subscribe_email_template_id,
+        "unsubscribe_email_template_id": list_with_subscribers[
+            0
+        ].unsubscribe_email_template_id,
+        "subscribe_phone_template_id": list_with_subscribers[
+            0
+        ].subscribe_phone_template_id,
+        "unsubscribe_phone_template_id": list_with_subscribers[
+            0
+        ].unsubscribe_phone_template_id,
+        "subscriber_count": 2,
+    } in data
+
+    session.expire_all()
