@@ -910,8 +910,8 @@ def list_import(
             type = "phone"
             session.add_all(
                 [
-                    Subscription(phone=number, confirmed=True, list_id=list_id)
-                    for number in list_import_payload.phone
+                    Subscription(phone=phone_number, confirmed=True, list_id=list_id)
+                    for phone_number in list_import_payload.phone
                 ]
             )
             session.commit()
