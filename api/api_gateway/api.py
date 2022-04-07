@@ -882,6 +882,8 @@ def list_import(
 ):
     """Imports a list"""
     try:
+        type = None
+
         _ = session.query(List).filter(List.id == list_id).one()
 
         if not list_import_payload.email and not list_import_payload.phone:
@@ -895,6 +897,7 @@ def list_import(
             }
 
         if list_import_payload.email:
+            type = "email"
             session.add_all(
                 [
                     Subscription(email=email, confirmed=True, list_id=list_id)
@@ -904,6 +907,7 @@ def list_import(
             session.commit()
 
         if list_import_payload.phone:
+            type = "phone"
             session.add_all(
                 [
                     Subscription(phone=number, confirmed=True, list_id=list_id)
@@ -919,6 +923,6 @@ def list_import(
         metrics.add_metric(name="ListEmailImportError", unit=MetricUnit.Count, value=1)
         metrics.add_metadata(key="list_id", value=str(list_import_payload.list_id))
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        return {"error": f"error importing list: {error}"}
+        return {"error": f"error importing {type} list: {error}"}
     else:
         return {"status": "OK"}
