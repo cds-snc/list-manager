@@ -1,7 +1,6 @@
 # pylint: disable=missing-class-docstring
 # pylint: disable=missing-function-docstring
 
-from ast import Str
 from os import environ
 from uuid import UUID
 from fastapi import Depends, FastAPI, HTTPException, Response, Request, status
@@ -21,7 +20,7 @@ from aws_lambda_powertools.metrics import MetricUnit
 from models.List import List
 from models.Subscription import Subscription
 
-from typing import Optional, Union
+from typing import Optional
 from pydantic import (
     BaseModel,
     BaseSettings,
