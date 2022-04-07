@@ -855,8 +855,8 @@ def email_list_import(
 
 
 class ListImportPayload(BaseModel):
-    emails: Optional[conlist(EmailStr, min_items=1, max_items=10000)]
-    numbers: Optional[
+    email: Optional[conlist(EmailStr, min_items=1, max_items=10000)]
+    phone: Optional[
         conlist(
             constr(
                 strip_whitespace=True,
@@ -878,36 +878,36 @@ def list_import(
     list_import_payload: ListImportPayload,
     response: Response,
     session: Session = Depends(get_db),
-    # _authorized: bool = Depends(verify_token),
+    _authorized: bool = Depends(verify_token),
 ):
     """Imports a list"""
     try:
         _ = session.query(List).filter(List.id == list_id).one()
 
-        if not list_import_payload.emails and not list_import_payload.numbers:
+        if not list_import_payload.email and not list_import_payload.phone:
             response.status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
-            return {"error": "Payload must include one of: numbers<list>, emails<list>"}
+            return {"error": "Payload must include one of: phone<list>, email<list>"}
 
-        if list_import_payload.emails and list_import_payload.numbers:
+        if list_import_payload.email and list_import_payload.phone:
             response.status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
             return {
-                "error": "Payload may only include one of: numbers<list>, emails<list>"
+                "error": "Payload may only include one of: phone<list>, email<list>"
             }
 
-        if list_import_payload.emails:
+        if list_import_payload.email:
             session.add_all(
                 [
                     Subscription(email=email, confirmed=True, list_id=list_id)
-                    for email in list_import_payload.emails
+                    for email in list_import_payload.email
                 ]
             )
             session.commit()
 
-        if list_import_payload.numbers:
+        if list_import_payload.phone:
             session.add_all(
                 [
-                    Subscription(phone=phone, confirmed=True, list_id=list_id)
-                    for phone in list_import_payload.numbers
+                    Subscription(phone=number, confirmed=True, list_id=list_id)
+                    for number in list_import_payload.phone
                 ]
             )
             session.commit()
