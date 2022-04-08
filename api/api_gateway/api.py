@@ -803,7 +803,7 @@ def send_bulk_notify(subscription_count, send_payload, rows, recipient_limit=500
         if i == subscription_count - 1:
             notify_bulk_subscribers.append(subscription_rows)
 
-    notifications_client = get_notify_client(send_payload.service_api_key)
+    notifications_client = get_notify_client(send_payload.service_api_key or NOTIFY_KEY)
 
     count_sent = 0
     for subscribers in notify_bulk_subscribers:
