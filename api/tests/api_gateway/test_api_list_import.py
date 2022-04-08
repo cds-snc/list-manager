@@ -1,11 +1,10 @@
 # pylint: disable=missing-class-docstring
 # pylint: disable=missing-function-docstring
 
-import os
 import uuid
 from sqlalchemy.exc import SQLAlchemyError
 from models.Subscription import Subscription
-from unittest.mock import ANY, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 ##
 # Old Endpoint Tests
