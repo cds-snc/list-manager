@@ -26,6 +26,7 @@ from pydantic import (
     BaseSettings,
     EmailStr,
     HttpUrl,
+    Json,
     conlist,
     validator,
 )
@@ -698,6 +699,7 @@ class SendPayload(BaseModel):
     service_api_key: Optional[str]
     job_name: Optional[str] = "Bulk email"
     unique: Optional[bool] = True
+    personalisation: Optional[Json] = {}
 
     @validator("template_type", allow_reuse=True)
     def template_type_email_or_phone(cls, v):
@@ -766,6 +768,9 @@ def send_bulk_notify(subscription_count, send_payload, rows, recipient_limit=500
     notify_bulk_subscribers = []
     subscription_rows = []
 
+    personalisation_keys = send_payload.personalisation.keys()
+    personalisation_values = send_payload.personalisation.values()
+
     template_type = send_payload.template_type.lower()
     # Split notifications into separate calls based on limit
     for i, row in enumerate(rows):
@@ -776,9 +781,13 @@ def send_bulk_notify(subscription_count, send_payload, rows, recipient_limit=500
             # Reset and add headers
             subscription_rows = []
             if template_type == "email":
-                subscription_rows.append(["email address", "unsubscribe_link"])
+                subscription_rows.append(
+                    ["email address", "unsubscribe_link", *personalisation_keys]
+                )
             elif template_type == "phone":
-                subscription_rows.append(["phone number", "subscription id"])
+                subscription_rows.append(
+                    ["phone number", "subscription id", *personalisation_keys]
+                )
 
         if row[template_type]:
             subscription_rows.append(
@@ -787,6 +796,7 @@ def send_bulk_notify(subscription_count, send_payload, rows, recipient_limit=500
                     get_unsubscribe_link(str(row["id"]))  # add unsub link
                     if "email" in template_type
                     else row["id"],  # phone notification untouched
+                    *personalisation_values,
                 ]
             )
 
