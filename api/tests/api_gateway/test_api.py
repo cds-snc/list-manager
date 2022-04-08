@@ -8,7 +8,7 @@ import pytest
 import uuid
 
 from aws_lambda_powertools.metrics import MetricUnit
-from fastapi import HTTPException, status
+from fastapi import HTTPException
 from unittest.mock import ANY, MagicMock, patch
 from sqlalchemy.exc import SQLAlchemyError
 from requests import HTTPError
