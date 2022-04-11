@@ -28,6 +28,7 @@ from pydantic import (
     HttpUrl,
     Json,
     conlist,
+    constr,
     validator,
 )
 
@@ -829,7 +830,7 @@ def get_unsubscribe_link(subscription_id):
     return f"{BASE_URL}/unsubscribe/{subscription_id}"
 
 
-class ListImportPayload(BaseModel):
+class ListImportEmailPayload(BaseModel):
     list_id: UUID
     emails: conlist(EmailStr, min_items=1, max_items=10000)
 
@@ -837,9 +838,9 @@ class ListImportPayload(BaseModel):
         extra = "forbid"
 
 
-@app.post("/listimport")
+@app.post("/listimport", deprecated=True)
 def email_list_import(
-    list_import_payload: ListImportPayload,
+    list_import_payload: ListImportEmailPayload,
     response: Response,
     session: Session = Depends(get_db),
     _authorized: bool = Depends(verify_token),
@@ -864,5 +865,79 @@ def email_list_import(
         metrics.add_metadata(key="list_id", value=str(list_import_payload.list_id))
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {"error": f"error importing list: {error}"}
+    else:
+        return {"status": "OK"}
+
+
+class ListImportPayload(BaseModel):
+    email: Optional[conlist(EmailStr, min_items=1, max_items=10000)]
+    phone: Optional[
+        conlist(
+            constr(
+                strip_whitespace=True,
+                min_length=9,
+                max_length=15,
+            ),
+            min_items=1,
+            max_items=10000,
+        )
+    ]
+
+    class Config:
+        extra = "forbid"
+
+
+@app.post("/list/{list_id}/import")
+def list_import(
+    list_id,
+    list_import_payload: ListImportPayload,
+    response: Response,
+    session: Session = Depends(get_db),
+    _authorized: bool = Depends(verify_token),
+):
+    """Imports a list"""
+    try:
+        type = None
+
+        _ = session.query(List).filter(List.id == list_id).one()
+
+        if not list_import_payload.email and not list_import_payload.phone:
+            response.status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+            return {"error": "Payload must include one of: phone<list>, email<list>"}
+
+        if list_import_payload.email and list_import_payload.phone:
+            response.status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+            return {
+                "error": "Payload may only include one of: phone<list>, email<list>"
+            }
+
+        if list_import_payload.email:
+            type = "email"
+            session.add_all(
+                [
+                    Subscription(email=email, confirmed=True, list_id=list_id)
+                    for email in list_import_payload.email
+                ]
+            )
+            session.commit()
+
+        if list_import_payload.phone:
+            type = "phone"
+            session.add_all(
+                [
+                    Subscription(phone=phone_number, confirmed=True, list_id=list_id)
+                    for phone_number in list_import_payload.phone
+                ]
+            )
+            session.commit()
+
+    except NoResultFound:
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return {"error": "list not found"}
+    except SQLAlchemyError as error:
+        metrics.add_metric(name="ListEmailImportError", unit=MetricUnit.Count, value=1)
+        metrics.add_metadata(key="list_id", value=str(list_import_payload.list_id))
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"error": f"error importing {type} list: {error}"}
     else:
         return {"status": "OK"}
