@@ -185,27 +185,52 @@ def test_phone_list_import_invalid_number(list_to_be_updated_fixture, client):
     )
     assert response.status_code == 422
 
+    assert response.json() == {
+        "detail": [
+            {
+                "loc": ["body", "phone", 0],
+                "msg": "ensure this value has at least 9 characters",
+                "type": "value_error.any_str.min_length",
+                "ctx": {"limit_value": 9},
+            }
+        ]
+    }
+
 
 def test_email_list_import_invalid_email(list_to_be_updated_fixture, client):
     # create phone list payload
-    phone_list = ["NotAnEmail", "email@example.com"]
+    email_list = ["NotAnEmail", "email@example.com"]
     response = client.post(
         f"/list/{list_to_be_updated_fixture.id}/import",
-        json={"phone": phone_list},
+        json={"email": email_list},
     )
     assert response.status_code == 422
+
+    assert response.json() == {
+        "detail": [
+            {
+                "loc": ["body", "email", 0],
+                "msg": "value is not a valid email address",
+                "type": "value_error.email",
+            }
+        ]
+    }
 
 
 def test_import_validation_only_one(list_to_be_updated_fixture, client):
     # Can only submit one of phone<list> or email<list>
-    phone_list = []
-    email_list = []
+    phone_list = ["613-545-6674"]
+    email_list = ["email@email.com"]
 
     response = client.post(
         f"/list/{list_to_be_updated_fixture.id}/import",
         json={"phone": phone_list, "email": email_list},
     )
     assert response.status_code == 422
+
+    assert response.json() == {
+        "error": "Payload may only include one of: phone<list>, email<list>"
+    }
 
 
 def test_import_validation_empty_list(list_to_be_updated_fixture, client):
@@ -218,6 +243,17 @@ def test_import_validation_empty_list(list_to_be_updated_fixture, client):
     )
     assert response.status_code == 422
 
+    assert response.json() == {
+        "detail": [
+            {
+                "loc": ["body", "phone"],
+                "msg": "ensure this value has at least 1 items",
+                "type": "value_error.list.min_items",
+                "ctx": {"limit_value": 1},
+            }
+        ]
+    }
+
 
 def test_import_validation_at_least_one(list_to_be_updated_fixture, client):
     # Must submit one of phone<list> or email<list>
@@ -226,3 +262,7 @@ def test_import_validation_at_least_one(list_to_be_updated_fixture, client):
         json={},
     )
     assert response.status_code == 422
+
+    assert response.json() == {
+        "error": "Payload must include one of: phone<list>, email<list>"
+    }
