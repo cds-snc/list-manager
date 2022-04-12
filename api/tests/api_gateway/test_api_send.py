@@ -9,7 +9,7 @@ from models.Subscription import Subscription
 @patch("api_gateway.api.get_notify_client")
 def test_send_email(mock_client, list_fixture, client, session):
     subscription0 = Subscription(
-        email="fixture_email_101", list=list_fixture, confirmed=True
+        email="fake@email.com", list=list_fixture, confirmed=True
     )
     session.add(subscription0)
     session.commit()
@@ -37,7 +37,7 @@ def test_send_email(mock_client, list_fixture, client, session):
 @patch("api_gateway.api.get_notify_client")
 def test_send_email_with_personalisation(mock_client, list_fixture, client, session):
     subscription0 = Subscription(
-        email="fixture_email_101", list=list_fixture, confirmed=True
+        email="fake@email.com", list=list_fixture, confirmed=True
     )
     session.add(subscription0)
     session.commit()
@@ -70,7 +70,7 @@ def test_send_email_with_personalisation(mock_client, list_fixture, client, sess
     subscribers = [
         ["email address", "unsubscribe_link", "subject", "message"],
         [
-            "fixture_email_101",
+            "fake@email.com",
             f"https://list-manager.alpha.canada.ca/unsubscribe/{subscription0.id}",
             "Subject for the email",
             "Message of the email",
