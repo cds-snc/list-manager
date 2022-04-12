@@ -10,7 +10,7 @@ from requests import HTTPError
 from sqlalchemy.exc import SQLAlchemyError, NoResultFound
 from sqlalchemy.sql.expression import func, cast
 from sqlalchemy.orm import Session
-from sqlalchemy import String
+from sqlalchemy import String, null, or_
 from database.db import db_session
 from logger import log
 
@@ -497,6 +497,18 @@ class SubscriptionEvent(BaseModel):
         extra = "forbid"
 
 
+def get_subscription(
+    list_id: str,
+    email: str = null,
+    phone: str = null,
+    session: Session = Depends(get_db),
+):
+    return session.query(Subscription).filter(
+        (Subscription.email == email, Subscription.phone == phone),
+        Subscription.list_id == list_id,
+    )
+
+
 @app.post("/subscription")
 def create_subscription(
     subscription_payload: SubscriptionEvent,
@@ -521,13 +533,22 @@ def create_subscription(
         return {"error": "email and phone can not be empty"}
 
     try:
-        subscription = Subscription(
+        subscription = get_subscription(
+            list_id=list.id,
             email=subscription_payload.email,
             phone=subscription_payload.phone,
-            list=list,
         )
-        session.add(subscription)
-        session.commit()
+
+        if subscription is None:
+            subscription = Subscription(
+                email=subscription_payload.email,
+                phone=subscription_payload.phone,
+                list=list,
+            )
+            session.add(subscription)
+            session.commit()
+
+        # Send confirmation email
         if (
             subscription_payload.email is not None
             and len(list.subscribe_email_template_id) == 36
