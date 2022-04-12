@@ -71,7 +71,7 @@ def test_send_email_with_personalisation(mock_client, list_fixture, client, sess
         ["email address", "unsubscribe_link", "subject", "message"],
         [
             "fixture_email_101",
-            f"https://list-manager.alpha.canada.ca/unsubscribe/{list_fixture.unsubscribe_email_template_id}",
+            f"https://list-manager.alpha.canada.ca/unsubscribe/{subscription0.id}",
             "Subject for the email",
             "Message of the email",
         ],
