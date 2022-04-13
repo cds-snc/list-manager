@@ -2,6 +2,7 @@
 # pylint: disable=missing-function-docstring
 
 from os import environ
+import traceback
 from uuid import UUID
 from fastapi import Depends, FastAPI, HTTPException, Response, Request, status
 from fastapi.responses import RedirectResponse, JSONResponse
@@ -503,9 +504,14 @@ def get_subscription(
     phone: str = null,
     session: Session = Depends(get_db),
 ):
-    return session.query(Subscription).filter(
-        (Subscription.email == email, Subscription.phone == phone),
-        Subscription.list_id == list_id,
+    return (
+        session.query(Subscription)
+        .filter(
+            Subscription.email == email,
+            Subscription.phone == phone,
+            Subscription.list_id == list_id,
+        )
+        .first()
     )
 
 
@@ -537,6 +543,7 @@ def create_subscription(
             list_id=list.id,
             email=subscription_payload.email,
             phone=subscription_payload.phone,
+            session=session,
         )
 
         if subscription is None:
