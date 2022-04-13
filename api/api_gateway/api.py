@@ -10,7 +10,7 @@ from requests import HTTPError
 from sqlalchemy.exc import SQLAlchemyError, NoResultFound
 from sqlalchemy.sql.expression import func, cast
 from sqlalchemy.orm import Session
-from sqlalchemy import String, null, or_
+from sqlalchemy import String, null
 from database.db import db_session
 from logger import log
 
