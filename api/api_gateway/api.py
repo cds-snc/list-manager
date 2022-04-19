@@ -2,7 +2,6 @@
 # pylint: disable=missing-function-docstring
 
 from os import environ
-import traceback
 from uuid import UUID
 from fastapi import Depends, FastAPI, HTTPException, Response, Request, status
 from fastapi.responses import RedirectResponse, JSONResponse
