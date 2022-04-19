@@ -82,7 +82,9 @@ def test_create_succeeds_with_phone(mock_client, list_fixture, client):
 
 
 @patch("api_gateway.api.get_notify_client")
-def test_create_succeeds_with_email_and_phone(mock_client, list_fixture, client):
+def test_create_fails_with_email_and_phone_validation_error(
+    mock_client, list_fixture, client
+):
     response = client.post(
         "/subscription",
         json={
@@ -91,8 +93,8 @@ def test_create_succeeds_with_email_and_phone(mock_client, list_fixture, client)
             "list_id": str(list_fixture.id),
         },
     )
-    assert response.json() == {"id": ANY}
-    assert response.status_code == 200
+    assert response.json() == {"error": "Must be one of Email or Phone"}
+    assert response.status_code == 422
 
 
 @patch("api_gateway.api.get_notify_client")
@@ -103,7 +105,6 @@ def test_create_succeeds_with_redirect(
         "/subscription",
         json={
             "email": "test@example.com",
-            "phone": "123456789",
             "list_id": str(list_fixture_with_redirects.id),
         },
     )
@@ -128,46 +129,6 @@ def test_create_subscription_with_undeclared_parameter(
     )
     assert response.json() == {"detail": ANY}
     assert response.status_code == 422
-
-
-@patch("api_gateway.api.db_session")
-@patch("api_gateway.api.get_notify_client")
-def test_create_succeeds_with_email_and_phone_unknown_error(
-    mock_client, mock_db_session, list_fixture, client
-):
-    mock_session = MagicMock()
-    mock_session.commit.side_effect = SQLAlchemyError()
-    mock_db_session.return_value = mock_session
-    response = client.post(
-        "/subscription",
-        json={
-            "email": "test@example.com",
-            "phone": "123456789",
-            "list_id": str(list_fixture.id),
-        },
-    )
-    assert response.json() == {"error": "error saving subscription"}
-    assert response.status_code == 500
-
-
-@patch("api_gateway.api.db_session")
-@patch("api_gateway.api.get_notify_client")
-def test_create_succeeds_with_email_and_phone_notify_error(
-    mock_client, mock_db_session, list_fixture, client
-):
-    mock_session = MagicMock()
-    mock_session.commit.side_effect = HTTPError()
-    mock_db_session.return_value = mock_session
-    response = client.post(
-        "/subscription",
-        json={
-            "email": "test@example.com",
-            "phone": "123456789",
-            "list_id": str(list_fixture.id),
-        },
-    )
-    assert response.json() == {"error": "error sending subscription notification"}
-    assert response.status_code == 502
 
 
 def test_confirm_with_bad_id(client):
