@@ -10,7 +10,7 @@ from requests import HTTPError
 from sqlalchemy.exc import SQLAlchemyError, NoResultFound
 from sqlalchemy.sql.expression import func, cast
 from sqlalchemy.orm import Session
-from sqlalchemy import String, null
+from sqlalchemy import String
 from database.db import db_session
 from logger import log
 
@@ -499,8 +499,8 @@ class SubscriptionEvent(BaseModel):
 
 def get_subscription(
     list_id: str,
-    email: str = null,
-    phone: str = null,
+    email: str = None,
+    phone: str = None,
     session: Session = Depends(get_db),
 ):
     return (
