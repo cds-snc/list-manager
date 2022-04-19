@@ -1,6 +1,7 @@
 # pylint: disable=missing-class-docstring
 # pylint: disable=missing-function-docstring
 
+from ast import Sub
 from os import environ
 from uuid import UUID
 from fastapi import Depends, FastAPI, HTTPException, Response, Request, status
@@ -864,12 +865,23 @@ def email_list_import(
     """Imports a list"""
     try:
         _ = session.query(List).filter(List.id == list_import_payload.list_id).one()
+
+        existing = [
+            email
+            for email, in (
+                session.query(Subscription.email)
+                .filter_by(list_id=list_import_payload.list_id)
+                .all()
+            )
+        ]
+        unique = set(list_import_payload.emails) - set(existing)
+
         session.add_all(
             [
                 Subscription(
                     email=email, confirmed=True, list_id=list_import_payload.list_id
                 )
-                for email in list_import_payload.emails
+                for email in unique
             ]
         )
         session.commit()
@@ -929,20 +941,36 @@ def list_import(
 
         if list_import_payload.email:
             type = "email"
+            existing = [
+                email
+                for email, in (
+                    session.query(Subscription.email).filter_by(list_id=list_id).all()
+                )
+            ]
+            unique = set(list_import_payload.email) - set(existing)
+
             session.add_all(
                 [
                     Subscription(email=email, confirmed=True, list_id=list_id)
-                    for email in list_import_payload.email
+                    for email in unique
                 ]
             )
             session.commit()
 
         if list_import_payload.phone:
             type = "phone"
+            existing = [
+                phone
+                for phone, in (
+                    session.query(Subscription.phone).filter_by(list_id=list_id).all()
+                )
+            ]
+            unique = set(list_import_payload.phone) - set(existing)
+
             session.add_all(
                 [
                     Subscription(phone=phone_number, confirmed=True, list_id=list_id)
-                    for phone_number in list_import_payload.phone
+                    for phone_number in unique
                 ]
             )
             session.commit()
