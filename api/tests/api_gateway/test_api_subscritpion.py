@@ -98,13 +98,30 @@ def test_create_fails_with_email_and_phone_validation_error(
 
 
 @patch("api_gateway.api.get_notify_client")
-def test_create_succeeds_with_redirect(
+def test_create_email_sub_succeeds_with_redirect(
     mock_client, list_fixture_with_redirects, client
 ):
     response = client.post(
         "/subscription",
         json={
             "email": "test@example.com",
+            "list_id": str(list_fixture_with_redirects.id),
+        },
+    )
+    assert response.status_code == 307
+    assert response.headers == {
+        "location": list_fixture_with_redirects.subscribe_redirect_url
+    }
+
+
+@patch("api_gateway.api.get_notify_client")
+def test_create_phone_sub_succeeds_with_redirect(
+    mock_client, list_fixture_with_redirects, client
+):
+    response = client.post(
+        "/subscription",
+        json={
+            "phone": "14565434545",
             "list_id": str(list_fixture_with_redirects.id),
         },
     )
@@ -122,7 +139,6 @@ def test_create_subscription_with_undeclared_parameter(
         "/subscription",
         json={
             "email": "test@example.com",
-            "phone": "123456789",
             "list_id": str(list_fixture.id),
             "foo": "bar",
         },
