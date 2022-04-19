@@ -583,7 +583,6 @@ def test_metrics(mock_mangum, context_fixture, capsys, metrics):
     log = capsys.readouterr().out.strip()
 
     metrics_output = json.loads(log)
-    print(metrics_output)
 
     metric_list = [
         "ListCreated",
