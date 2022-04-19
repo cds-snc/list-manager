@@ -538,6 +538,10 @@ def create_subscription(
         response.status_code = status.HTTP_400_BAD_REQUEST
         return {"error": "email and phone can not be empty"}
 
+    if subscription_payload.email and subscription_payload.phone:
+        response.status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+        return {"error": "Must be one of Email or Phone"}
+
     try:
         subscription = get_subscription(
             list_id=list.id,
