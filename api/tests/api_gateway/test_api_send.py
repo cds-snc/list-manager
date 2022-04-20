@@ -36,10 +36,14 @@ def test_send_email(mock_client, list_fixture, client, session):
 
 @patch("api_gateway.api.get_notify_client")
 def test_send_email_with_personalisation(mock_client, list_fixture, client, session):
-    subscription0 = Subscription(
+    session.execute("""TRUNCATE TABLE subscriptions""")
+    session.commit()
+
+    subscription = Subscription(
         email="fake@email.com", list=list_fixture, confirmed=True
     )
-    session.add(subscription0)
+
+    session.add(subscription)
     session.commit()
 
     template_id = str(uuid.uuid4())
@@ -64,14 +68,13 @@ def test_send_email_with_personalisation(mock_client, list_fixture, client, sess
     assert response.status_code == 200
     assert data["status"] == "OK"
     assert data["sent"] == 1
-    session.expire_all()
 
     job_name = "Job Name"
     subscribers = [
         ["email address", "unsubscribe_link", "subject", "message"],
         [
             "fake@email.com",
-            f"https://list-manager.alpha.canada.ca/unsubscribe/{subscription0.id}",
+            f"https://list-manager.alpha.canada.ca/unsubscribe/{subscription.id}",
             "Subject for the email",
             "Message of the email",
         ],
