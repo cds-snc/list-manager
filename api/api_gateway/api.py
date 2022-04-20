@@ -51,7 +51,7 @@ REDIRECT_ALLOW_LIST = [
     "articles.cdssandbox.xyz",
     "articles.alpha.canada.ca",
 ]
-BASE_URL = environ.get("BASE_URL", "https://list-manager.alpha.canada.ca")
+BASE_URL = environ.get("BASE_URL", "https://articles.alpha.canada.ca")
 
 description = """
 List Manager 📝 API helps you manage your lists of subscribers and easily utilize GC Notify to send messages
