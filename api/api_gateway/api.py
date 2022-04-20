@@ -498,6 +498,23 @@ class SubscriptionEvent(BaseModel):
         extra = "forbid"
 
 
+def get_subscription(
+    list_id: str,
+    email: str = None,
+    phone: str = None,
+    session: Session = Depends(get_db),
+):
+    return (
+        session.query(Subscription)
+        .filter(
+            Subscription.email == email,
+            Subscription.phone == phone,
+            Subscription.list_id == list_id,
+        )
+        .first()
+    )
+
+
 @app.post("/subscription")
 def create_subscription(
     subscription_payload: SubscriptionEvent,
@@ -521,14 +538,28 @@ def create_subscription(
         response.status_code = status.HTTP_400_BAD_REQUEST
         return {"error": "email and phone can not be empty"}
 
+    if subscription_payload.email and subscription_payload.phone:
+        response.status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+        return {"error": "Must be one of Email or Phone"}
+
     try:
-        subscription = Subscription(
+        subscription = get_subscription(
+            list_id=list.id,
             email=subscription_payload.email,
             phone=subscription_payload.phone,
-            list=list,
+            session=session,
         )
-        session.add(subscription)
-        session.commit()
+
+        if subscription is None:
+            subscription = Subscription(
+                email=subscription_payload.email,
+                phone=subscription_payload.phone,
+                list=list,
+            )
+            session.add(subscription)
+            session.commit()
+
+        # Send confirmation email
         if (
             subscription_payload.email is not None
             and len(list.subscribe_email_template_id) == 36
@@ -848,12 +879,23 @@ def email_list_import(
     """Imports a list"""
     try:
         _ = session.query(List).filter(List.id == list_import_payload.list_id).one()
+
+        existing = [
+            email
+            for email, in (
+                session.query(Subscription.email)
+                .filter_by(list_id=list_import_payload.list_id)
+                .all()
+            )
+        ]
+        unique = set(list_import_payload.emails) - set(existing)
+
         session.add_all(
             [
                 Subscription(
                     email=email, confirmed=True, list_id=list_import_payload.list_id
                 )
-                for email in list_import_payload.emails
+                for email in unique
             ]
         )
         session.commit()
@@ -913,20 +955,36 @@ def list_import(
 
         if list_import_payload.email:
             type = "email"
+            existing = [
+                email
+                for email, in (
+                    session.query(Subscription.email).filter_by(list_id=list_id).all()
+                )
+            ]
+            unique = set(list_import_payload.email) - set(existing)
+
             session.add_all(
                 [
                     Subscription(email=email, confirmed=True, list_id=list_id)
-                    for email in list_import_payload.email
+                    for email in unique
                 ]
             )
             session.commit()
 
         if list_import_payload.phone:
             type = "phone"
+            existing = [
+                phone
+                for phone, in (
+                    session.query(Subscription.phone).filter_by(list_id=list_id).all()
+                )
+            ]
+            unique = set(list_import_payload.phone) - set(existing)
+
             session.add_all(
                 [
                     Subscription(phone=phone_number, confirmed=True, list_id=list_id)
-                    for phone_number in list_import_payload.phone
+                    for phone_number in unique
                 ]
             )
             session.commit()

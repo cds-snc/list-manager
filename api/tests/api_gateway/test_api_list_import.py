@@ -127,13 +127,6 @@ def test_email_list_with_unknown_error(
 
 
 def test_email_list_import_new(session, list_to_be_updated_fixture, client):
-    # Empty subscriptions table
-    data = (
-        session.query(Subscription)
-        .filter(Subscription.list_id == list_to_be_updated_fixture.id)
-        .delete()
-    )
-
     # create email list payload
     email_list = [f"email{str(x)}@example.com" for x in range(10)]
     response = client.post(
@@ -151,14 +144,52 @@ def test_email_list_import_new(session, list_to_be_updated_fixture, client):
     assert data.count() == 10
 
 
-def test_phone_list_import(session, list_to_be_updated_fixture, client):
-    # Empty subscriptions table
-    data = (
-        session.query(Subscription)
-        .filter(Subscription.list_id == list_to_be_updated_fixture.id)
-        .delete()
+def test_email_list_import_new_no_duplicates(
+    session, list_to_be_updated_fixture, client
+):
+    email_list = [f"email{str(x)}@example.com" for x in range(10)]
+    response = client.post(
+        f"/list/{list_to_be_updated_fixture.id}/import",
+        json={"email": email_list},
     )
+    assert response.status_code == 200
+    assert response.json() == {"status": "OK"}
 
+    # Do it again with the same list
+    response = client.post(
+        f"/list/{list_to_be_updated_fixture.id}/import",
+        json={"email": email_list},
+    )
+    assert response.status_code == 200
+    assert response.json() == {"status": "OK"}
+
+    # Since we submitted the same list twice, should still be the same result (no dupes)
+    data = session.query(Subscription).filter(
+        Subscription.list_id == list_to_be_updated_fixture.id,
+        Subscription.email.is_not(None),
+        Subscription.confirmed.is_(True),
+    )
+    assert data.count() == 10
+
+    # Add 5 new emails to the previous list
+    email_list = [*email_list, *[f"email{str(x)}@example2.com" for x in range(5)]]
+    response = client.post(
+        f"/list/{list_to_be_updated_fixture.id}/import",
+        json={"email": email_list},
+    )
+    assert response.status_code == 200
+    assert response.json() == {"status": "OK"}
+
+    # There were five new emails in the list
+    data = session.query(Subscription).filter(
+        Subscription.list_id == list_to_be_updated_fixture.id,
+        Subscription.email.is_not(None),
+        Subscription.confirmed.is_(True),
+    )
+    assert data.count() == 15
+
+
+def test_phone_list_import(session, list_to_be_updated_fixture, client):
     # create phone list payload
     phone_list = [f"555-{str(x)}55-5555" for x in range(10)]
     response = client.post(
