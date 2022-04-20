@@ -8,41 +8,11 @@ import pytest
 import uuid
 
 from aws_lambda_powertools.metrics import MetricUnit
-from fastapi import HTTPException, status
+from fastapi import HTTPException
 from unittest.mock import ANY, MagicMock, patch
 from sqlalchemy.exc import SQLAlchemyError
-from requests import HTTPError
 from models.List import List
 from models.Subscription import Subscription
-
-
-@patch("api_gateway.api.get_notify_client")
-def test_send_email(mock_client, list_fixture, client, session):
-    subscription0 = Subscription(
-        email="fixture_email_101", list=list_fixture, confirmed=True
-    )
-    session.add(subscription0)
-    session.commit()
-
-    template_id = str(uuid.uuid4())
-    response = client.post(
-        "/send",
-        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
-        json={
-            "service_api_key": str(uuid.uuid4()),
-            "list_id": str(list_fixture.id),
-            "template_id": template_id,
-            "template_type": "email",
-            "job_name": "Job Name",
-        },
-    )
-    data = response.json()
-    assert data["status"] == "OK"
-    assert data["sent"] == 1
-    assert response.status_code == 200
-    session.expire_all()
-
-    mock_client().send_bulk_notifications.assert_called_once()
 
 
 def test_return_all_lists(list_fixture, list_fixture_with_redirects, client):
@@ -81,7 +51,7 @@ def test_return_all_lists_with_additional_data(
                 "unsubscribe_email_template_id": list_fixture.unsubscribe_email_template_id,
                 "subscribe_phone_template_id": list_fixture.subscribe_phone_template_id,
                 "unsubscribe_phone_template_id": list_fixture.unsubscribe_phone_template_id,
-                "subscriber_count": 1,
+                "subscriber_count": 0,
             }
         )
     )
@@ -134,7 +104,7 @@ def test_return_lists_by_service(list_fixture, list_fixture_with_redirects, clie
         "unsubscribe_email_template_id": list_fixture_with_redirects.unsubscribe_email_template_id,
         "subscribe_phone_template_id": list_fixture_with_redirects.subscribe_phone_template_id,
         "unsubscribe_phone_template_id": list_fixture_with_redirects.unsubscribe_phone_template_id,
-        "subscriber_count": 1,
+        "subscriber_count": 0,
     } in response.json()
 
     assert response.status_code == 200
@@ -425,151 +395,26 @@ def test_edit_list_with_correct_id_unknown_error(mock_db_session, list_fixture, 
     assert response.status_code == 500
 
 
-@patch("api_gateway.api.get_notify_client")
-def test_send_no_api_key(mock_client, client):
-    response = client.post(
-        "/send",
-        json={
-            "list_id": str(uuid.uuid4()),
-            "template_id": str(uuid.uuid4()),
-            "template_type": "email",
-        },
-    )
-    data = response.json()
-    assert data == {"detail": "Unauthorized"}
-    assert response.status_code == 401
+# @TODO - not sure we need to test this middleware
+# @patch("api_gateway.api.get_notify_client")
+# def test_global_exception_handler(mock_client, list_fixture, client):
+#     template_id = str(uuid.uuid4())
+#     mock_client.side_effect = Exception("Unknown error")
 
+#     response = client.post(
+#         "/send",
+#         headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
+#         json={
+#             "service_api_key": str(uuid.uuid4()),
+#             "list_id": str(list_fixture.id),
+#             "template_id": template_id,
+#             "template_type": "email",
+#             "job_name": "Job Name",
+#         },
+#     )
 
-@patch("api_gateway.api.get_notify_client")
-def test_send_invalid_list(mock_client, client):
-    response = client.post(
-        "/send",
-        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
-        json={
-            "service_api_key": str(uuid.uuid4()),
-            "list_id": str(uuid.uuid4()),
-            "template_id": str(uuid.uuid4()),
-            "template_type": "email",
-        },
-    )
-    data = response.json()
-    assert "error" in data
-    assert "not found" in data["error"]
-    assert response.status_code == 404
-
-
-@patch("api_gateway.api.db_session")
-@patch("api_gateway.api.get_notify_client")
-def test_send_notify_error(mock_client, mock_db_session, client):
-
-    mock_client.side_effect = HTTPError()
-    response = client.post(
-        "/send",
-        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
-        json={
-            "service_api_key": str(uuid.uuid4()),
-            "list_id": str(uuid.uuid4()),
-            "template_id": str(uuid.uuid4()),
-            "template_type": "email",
-        },
-    )
-    assert response.json() == {"error": "error sending bulk notifications"}
-    assert response.status_code == 502
-
-
-@patch("api_gateway.api.get_notify_client")
-def test_send_duplicate_emails(mock_client, list_fixture_with_duplicates, client):
-    template_id = str(uuid.uuid4())
-    response = client.post(
-        "/send",
-        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
-        json={
-            "service_api_key": str(uuid.uuid4()),
-            "list_id": str(list_fixture_with_duplicates.id),
-            "template_id": template_id,
-            "template_type": "email",
-            "job_name": "Job Name",
-        },
-    )
-    data = response.json()
-
-    assert data["status"] == "OK"
-    assert data["sent"] == 2
-
-    response = client.post(
-        "/send",
-        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
-        json={
-            "service_api_key": str(uuid.uuid4()),
-            "list_id": str(list_fixture_with_duplicates.id),
-            "template_id": template_id,
-            "template_type": "email",
-            "job_name": "Job Name",
-            "unique": False,
-        },
-    )
-    data = response.json()
-
-    assert data["status"] == "OK"
-    assert data["sent"] == 4
-
-
-@patch("api_gateway.api.get_notify_client")
-def test_send_duplicate_phones(mock_client, list_fixture_with_duplicates, client):
-    template_id = str(uuid.uuid4())
-    response = client.post(
-        "/send",
-        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
-        json={
-            "service_api_key": str(uuid.uuid4()),
-            "list_id": str(list_fixture_with_duplicates.id),
-            "template_id": template_id,
-            "template_type": "phone",
-            "job_name": "Job Name",
-        },
-    )
-    data = response.json()
-
-    assert data["status"] == "OK"
-    assert data["sent"] == 2
-
-    template_id = str(uuid.uuid4())
-    response = client.post(
-        "/send",
-        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
-        json={
-            "service_api_key": str(uuid.uuid4()),
-            "list_id": str(list_fixture_with_duplicates.id),
-            "template_id": template_id,
-            "template_type": "phone",
-            "job_name": "Job Name",
-            "unique": False,
-        },
-    )
-    data = response.json()
-    assert data["status"] == "OK"
-    assert data["sent"] == 3
-
-
-@patch("api_gateway.api.get_notify_client")
-def test_global_exception_handler(mock_client, list_fixture, client):
-    template_id = str(uuid.uuid4())
-    mock_client.side_effect = Exception("Unknown error")
-
-    response = client.post(
-        "/send",
-        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
-        json={
-            "service_api_key": str(uuid.uuid4()),
-            "list_id": str(list_fixture.id),
-            "template_id": template_id,
-            "template_type": "email",
-            "job_name": "Job Name",
-        },
-    )
-
-    mock_client.assert_called_once()
-    assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+#     mock_client.assert_called_once()
+#     assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
 
 
 @patch("main.Mangum")
@@ -583,7 +428,6 @@ def test_metrics(mock_mangum, context_fixture, capsys, metrics):
     log = capsys.readouterr().out.strip()
 
     metrics_output = json.loads(log)
-    print(metrics_output)
 
     metric_list = [
         "ListCreated",
