@@ -554,37 +554,6 @@ def test_counts_when_list_has_subscribers(
 
 
 @patch("api_gateway.api.get_notify_client")
-def test_unique_counts_for_list_subscribers(
-    mock_client,
-    session,
-    list_count_fixture_1,
-    client,
-):
-    # add subscribers to list 1
-    list_1_emails = [
-        {"email": "list1+0@example.com", "confirmed": False},
-        {"email": "list1+1@example.com", "confirmed": True},
-        {"email": "list1+2@example.com", "confirmed": True},
-        {"email": "list1+1@example.com", "confirmed": True},
-        {"email": "list1+1@example.com", "confirmed": True},
-    ]
-
-    subscribe_users(session, list_1_emails, list_count_fixture_1)
-
-    response = client.get(
-        f"/lists/{str(list_count_fixture_1.service_id)}/subscriber-count?unique=1",
-        headers={"Authorization": os.environ["API_AUTH_TOKEN"]},
-    )
-
-    data = response.json()
-
-    # check list 1
-    item = find_item_in_dict_list(data, "list_id", str(list_count_fixture_1.id))
-    assert item is not None
-    assert item["subscriber_count"] == 2
-
-
-@patch("api_gateway.api.get_notify_client")
 def test_remove_all_subscribers_from_list(
     mock_client,
     session,
