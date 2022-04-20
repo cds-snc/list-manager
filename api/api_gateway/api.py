@@ -184,7 +184,7 @@ class ListGetPayload(ListCreatePayload):
 def lists(session: Session = Depends(get_db)) -> list[ListGetPayload]:
     sub_query = (
         session.query(
-            func.count(func.distinct(Subscription.email)).label("subscriber_count"),
+            func.count(Subscription.id).label("subscriber_count"),
             Subscription.list_id,
         )
         .filter(Subscription.confirmed.is_(True))
@@ -251,7 +251,7 @@ def lists(session: Session = Depends(get_db)) -> list[ListGetPayload]:
 def lists_by_service(service_id, session: Session = Depends(get_db)):
     sub_query = (
         session.query(
-            func.count(func.distinct(Subscription.email)).label("subscriber_count"),
+            func.count(Subscription.id).label("subscriber_count"),
             Subscription.list_id,
         )
         .filter(Subscription.confirmed.is_(True))
@@ -331,28 +331,15 @@ def get_list_counts(
         )
     )
 
-    if unique:
-        lists = (
-            session.query(
-                func.count(func.distinct(Subscription.email)), Subscription.list_id
-            )
-            .filter(
-                Subscription.list_id.in_(list_ids),
-                Subscription.confirmed.is_(True),
-            )
-            .group_by(Subscription.list_id)
-            .all()
+    lists = (
+        session.query(func.count(Subscription.id), Subscription.list_id)
+        .filter(
+            Subscription.list_id.in_(list_ids),
+            Subscription.confirmed.is_(True),
         )
-    else:
-        lists = (
-            session.query(func.count(Subscription.email), Subscription.list_id)
-            .filter(
-                Subscription.list_id.in_(list_ids),
-                Subscription.confirmed.is_(True),
-            )
-            .group_by(Subscription.list_id)
-            .all()
-        )
+        .group_by(Subscription.list_id)
+        .all()
+    )
 
     return list(
         map(
