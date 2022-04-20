@@ -314,7 +314,7 @@ def lists_by_service(service_id, session: Session = Depends(get_db)):
     return sanitized_lists
 
 
-@app.get("/lists/{service_id}/subscriber-count/")
+@app.get("/lists/{service_id}/subscriber-count/", deprecated=True)
 def get_list_counts(
     service_id,
     response: Response,
