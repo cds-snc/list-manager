@@ -570,6 +570,7 @@ def create_subscription(
 
         if (
             subscription_payload.phone is not None
+            and list.subscribe_phone_template_id is not None
             and len(list.subscribe_phone_template_id) == 36
         ):
             notifications_client.send_sms_notification(
