@@ -26,4 +26,5 @@ jobs:
         with:
           dependency_track_api_key: ${{ secrets.DEPENDENCY_TRACK_API_KEY }}
           project_name: list-manager/app
-          project_type: python        
+          project_type: python
+          working_directory: api       
