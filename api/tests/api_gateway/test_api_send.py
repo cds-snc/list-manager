@@ -1,4 +1,5 @@
 import json
+from typing import Any
 import uuid
 
 from unittest.mock import patch
@@ -134,7 +135,7 @@ def test_send_notify_error(mock_client, mock_db_session, client):
             "template_type": "email",
         },
     )
-    assert response.json() == {"error": "error sending bulk notifications"}
+    assert response.json() == {"error": "HTTP Error sending bulk notifications"}
     assert response.status_code == 502
 
 
