@@ -775,11 +775,17 @@ def send(
         metrics.add_metric(name="BulkNotificationError", unit=MetricUnit.Count, value=1)
         metrics.add_metadata(key="subscription_count", value=str(subscription_count))
 
-        return {"error": "error sending bulk notifications"}
+        return {
+            "error": "HTTP Error sending bulk notifications",
+            "details": err
+        }
 
     except Exception as err:
         log.error(err)
-        return {"error": "error sending bulk notifications"}
+        return {
+            "error": "error sending bulk notifications",
+            "details": err
+        }
 
     return {"status": "OK", "sent": sent_notifications}
 
