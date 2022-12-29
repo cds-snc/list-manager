@@ -8,4 +8,4 @@ logzero==1.7.0
 mangum==0.12.1
 notifications-python-client==6.0.2
 psycopg2-binary==2.9.5
-SQLAlchemy==1.4.44
+SQLAlchemy==1.4.45
