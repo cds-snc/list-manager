@@ -42,11 +42,3 @@ jobs:
           docker build \
           --build-arg git_sha=$GITHUB_SHA \
           -t $REGISTRY/${{ matrix.image }}:latest .
-
-      - name: Docker generate SBOM
-        uses: cds-snc/security-tools/.github/actions/generate-sbom@a38917b147dfc8f086abcf81529e3c12f26529b8 # v2.1.0
-        with:
-          docker_image: "${{ env.REGISTRY }}/${{ matrix.image }}:latest"
-          dockerfile_path: "${{ matrix.image }}/Dockerfile"
-          sbom_name: "${{ matrix.image }}"
-          token: "${{ secrets.GITHUB_TOKEN }}"
