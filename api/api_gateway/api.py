@@ -666,15 +666,22 @@ def unsubscribe(
         phone = subscription.phone
         session.delete(subscription)
         session.commit()
-
-        if email is not None and len(list.unsubscribe_email_template_id) == 36:
+        if (
+            email is not None
+            and list.unsubscribe_email_template_id is not None
+            and len(list.unsubscribe_email_template_id) == 36
+        ):
             notifications_client.send_email_notification(
                 email_address=email,
                 template_id=list.unsubscribe_email_template_id,
                 personalisation={"email_address": email, "name": list.name},
             )
 
-        if phone is not None and len(list.unsubscribe_phone_template_id) == 36:
+        if (
+            phone is not None
+            and list.unsubscribe_phone_template_id is not None
+            and len(list.unsubscribe_phone_template_id) == 36
+        ):
             notifications_client.send_sms_notification(
                 phone_number=phone,
                 template_id=list.unsubscribe_phone_template_id,
