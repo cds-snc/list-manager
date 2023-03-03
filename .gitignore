@@ -130,7 +130,6 @@ dmypy.json
 
 .DS_Store
 .terragrunt*
-.terraform.lock.hcl
 *.zip
 *.auto.tfvars
 .coverage
