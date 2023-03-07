@@ -138,7 +138,9 @@ resource "aws_wafv2_web_acl" "api_waf" {
         statement {
           size_constraint_statement {
             field_to_match {
-              body {}
+              body {
+                oversize_handling = "CONTINUE"
+              }
             }
             comparison_operator = "GT"
             size                = "8192"
