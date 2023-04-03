@@ -107,10 +107,12 @@ def test_create_email_sub_succeeds_with_redirect(
             "email": "test@example.com",
             "list_id": str(list_fixture_with_redirects.id),
         },
+        follow_redirects=False,
     )
     assert response.status_code == 307
     assert response.headers == {
-        "location": list_fixture_with_redirects.subscribe_redirect_url
+        "content-length": "0",
+        "location": list_fixture_with_redirects.subscribe_redirect_url,
     }
 
 
@@ -124,10 +126,12 @@ def test_create_phone_sub_succeeds_with_redirect(
             "phone": "14565434545",
             "list_id": str(list_fixture_with_redirects.id),
         },
+        follow_redirects=False,
     )
     assert response.status_code == 307
     assert response.headers == {
-        "location": list_fixture_with_redirects.subscribe_redirect_url
+        "content-length": "0",
+        "location": list_fixture_with_redirects.subscribe_redirect_url,
     }
 
 
@@ -172,11 +176,12 @@ def test_confirm_with_correct_id_and_redirects(
 ):
     response = client.get(
         f"/subscription/{str(subscription_fixture_with_redirects.id)}/confirm",
-        allow_redirects=False,
+        follow_redirects=False,
     )
     assert response.status_code == 307
     assert response.headers == {
-        "location": list_fixture_with_redirects.confirm_redirect_url
+        "content-length": "0",
+        "location": list_fixture_with_redirects.confirm_redirect_url,
     }
     session.refresh(subscription_fixture_with_redirects)
     assert subscription_fixture_with_redirects.confirmed is True
@@ -237,11 +242,13 @@ def test_unsubscribe_event_with_correct_id_and_redirect(
     client,
 ):
     response = client.delete(
-        f"/subscription/{str(subscription_fixture_with_redirects.id)}"
+        f"/subscription/{str(subscription_fixture_with_redirects.id)}",
+        follow_redirects=False,
     )
     assert response.status_code == 307
     assert response.headers == {
-        "location": list_fixture_with_redirects.unsubscribe_redirect_url
+        "content-length": "0",
+        "location": list_fixture_with_redirects.unsubscribe_redirect_url,
     }
 
 
@@ -304,11 +311,12 @@ def test_get_unsubscribe_event_with_correct_id_and_redirect(
 ):
     response = client.get(
         f"/unsubscribe/{str(subscription_fixture_with_redirects.id)}",
-        allow_redirects=False,
+        follow_redirects=False,
     )
     assert response.status_code == 307
     assert response.headers == {
-        "location": list_fixture_with_redirects.unsubscribe_redirect_url
+        "content-length": "0",
+        "location": list_fixture_with_redirects.unsubscribe_redirect_url,
     }
 
 
