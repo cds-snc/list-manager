@@ -110,6 +110,7 @@ def test_create_email_sub_succeeds_with_redirect(
     )
     assert response.status_code == 307
     assert response.headers == {
+        "content-length": "0",
         "location": list_fixture_with_redirects.subscribe_redirect_url
     }
 
@@ -127,6 +128,7 @@ def test_create_phone_sub_succeeds_with_redirect(
     )
     assert response.status_code == 307
     assert response.headers == {
+        "content-length": "0",
         "location": list_fixture_with_redirects.subscribe_redirect_url
     }
 
@@ -176,6 +178,7 @@ def test_confirm_with_correct_id_and_redirects(
     )
     assert response.status_code == 307
     assert response.headers == {
+        "content-length": "0",
         "location": list_fixture_with_redirects.confirm_redirect_url
     }
     session.refresh(subscription_fixture_with_redirects)
@@ -241,6 +244,7 @@ def test_unsubscribe_event_with_correct_id_and_redirect(
     )
     assert response.status_code == 307
     assert response.headers == {
+        "content-length": "0",
         "location": list_fixture_with_redirects.unsubscribe_redirect_url
     }
 
@@ -308,6 +312,7 @@ def test_get_unsubscribe_event_with_correct_id_and_redirect(
     )
     assert response.status_code == 307
     assert response.headers == {
+        "content-length": "0",
         "location": list_fixture_with_redirects.unsubscribe_redirect_url
     }
 
