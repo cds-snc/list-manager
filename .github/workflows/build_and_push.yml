@@ -62,9 +62,6 @@ jobs:
           docker push $REGISTRY/${{ matrix.image }}:$GITHUB_SHA
           docker push $REGISTRY/${{ matrix.image }}:latest
 
-      - name: Logout of Amazon ECR
-        run: docker logout ${{ steps.login-ecr.outputs.registry }}
-
       - name: Deploy lambda
         if: matrix.image == 'api' || contains(matrix.image, 'scanners')
         run: |
@@ -86,3 +83,6 @@ jobs:
           dockerfile_path: "${{ matrix.image }}/Dockerfile"
           sbom_name: "${{ matrix.image }}"
           token: "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Logout of Amazon ECR
+        run: docker logout ${{ steps.login-ecr.outputs.registry }}
