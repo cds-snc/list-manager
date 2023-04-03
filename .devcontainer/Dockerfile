@@ -42,10 +42,6 @@ RUN curl -Lo shellcheck.tar.xz "https://github.com/koalaman/shellcheck/releases/
     && mv "shellcheck-v${SHELLCHECK_VERSION}/shellcheck" /usr/local/bin/ \
     && rm -r shellcheck*
 
-# Install Checkov
-RUN pip3 install --upgrade requests setuptools \
-    && pip3 install --upgrade botocore checkov
-
 # Install AWS CLI
 ARG AWS_CLI_VERSION
 COPY .devcontainer/aws_cli.asc ./
