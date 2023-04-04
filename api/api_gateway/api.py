@@ -181,7 +181,7 @@ class ListGetPayload(ListCreatePayload):
 
 
 @app.get("/lists")
-def lists(session: Session = Depends(get_db)) -> list[ListGetPayload]:
+def lists(session: Session = Depends(get_db)):
     sub_query = (
         session.query(
             func.count(Subscription.id).label("subscriber_count"),
