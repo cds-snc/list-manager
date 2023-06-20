@@ -44,7 +44,7 @@ jobs:
           echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
 
       - name: Terraform plan
-        uses: cds-snc/terraform-plan@1519c0074bc5bee9e949c7d1d4d7636a75c2479e # v1.0.10
+        uses: cds-snc/terraform-plan@7f4ce4a4bdffaba639d32a45272804e37a569408 # v3.0.6
         with:
           comment-delete: true
           comment-title: Plan for ${{ matrix.module }}
