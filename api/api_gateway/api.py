@@ -230,7 +230,7 @@ def lists(session: Session = Depends(get_db)):
 
     sanitized_lists = list(
         map(
-            lambda l: {
+            lambda l: {  # noqa: E741
                 key: getattr(l, key)
                 for key in ListGetPayload.__fields__
                 if getattr(l, key) is not None
@@ -298,7 +298,7 @@ def lists_by_service(service_id, session: Session = Depends(get_db)):
 
     sanitized_lists = list(
         map(
-            lambda l: {
+            lambda l: {  # noqa: E741
                 key: getattr(l, key)
                 for key in ListGetPayload.__fields__
                 if getattr(l, key) is not None
@@ -326,7 +326,7 @@ def get_list_counts(
 
     list_ids = list(
         map(
-            lambda l: str(l.id),
+            lambda l: str(l.id),  # noqa: E741
             lists,
         )
     )
@@ -343,7 +343,7 @@ def get_list_counts(
 
     return list(
         map(
-            lambda l: {
+            lambda l: {  # noqa: E741
                 "list_id": l[1],
                 "subscriber_count": l[0],
             },
