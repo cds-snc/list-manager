@@ -402,7 +402,6 @@ def update_list(
         return {"error": "list not found"}
 
     try:
-
         session.query(List).filter(List.id == list.id).update(
             list_update_payload.dict(exclude_unset=True)
         )
