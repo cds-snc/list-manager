@@ -249,7 +249,6 @@ def list_to_be_updated_fixture(session):
 
 @pytest.fixture(scope="session")
 def client() -> Generator[TestClient, Any, None]:
-
     with TestClient(api.app) as client:
         yield client
 
@@ -285,7 +284,6 @@ def metrics():
 
 @pytest.fixture(scope="function")
 def list_with_subscribers(session):
-
     list1 = List(
         name="sub_list_counter1",
         language="en",

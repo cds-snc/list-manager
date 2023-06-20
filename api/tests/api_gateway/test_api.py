@@ -356,7 +356,6 @@ def test_edit_list_with_correct_id(session, client):
 
 
 def test_edit_list_without_supplying_service_id_and_name(session, client):
-
     list = List(
         name="name_1",
         language="English",
@@ -419,7 +418,6 @@ def test_edit_list_with_correct_id_unknown_error(mock_db_session, list_fixture, 
 
 @patch("main.Mangum")
 def test_metrics(mock_mangum, context_fixture, capsys, metrics):
-
     mock_asgi_handler = MagicMock()
     mock_asgi_handler.return_value = True
     mock_mangum.return_value = mock_asgi_handler

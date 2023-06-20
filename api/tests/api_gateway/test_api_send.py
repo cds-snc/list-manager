@@ -123,7 +123,6 @@ def test_send_invalid_list(mock_client, client):
 @patch("api_gateway.api.db_session")
 @patch("api_gateway.api.get_notify_client")
 def test_send_notify_error(mock_client, mock_db_session, client):
-
     mock_client.side_effect = HTTPError()
     response = client.post(
         "/send",
