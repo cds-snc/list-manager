@@ -57,7 +57,7 @@ resource "aws_sns_topic_subscription" "warning_us_east" {
 # Lambda: post notifications to Slack
 #
 module "notify_slack" {
-  source = "github.com/cds-snc/terraform-modules?ref=v0.0.49//notify_slack"
+  source = "github.com/cds-snc/terraform-modules//notify_slack?ref=v0.0.49"
 
   function_name     = "notify_slack"
   project_name      = "ListManager"
