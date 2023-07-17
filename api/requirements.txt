@@ -7,5 +7,6 @@ fastapi==0.100.0
 logzero==1.7.0
 mangum==0.17.0
 notifications-python-client==6.4.1
+pydantic-settings==2.0.2
 psycopg2-binary==2.9.6
 SQLAlchemy==1.4.49

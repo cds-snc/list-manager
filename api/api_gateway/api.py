@@ -23,7 +23,6 @@ from models.Subscription import Subscription
 from typing import Optional
 from pydantic import (
     BaseModel,
-    BaseSettings,
     EmailStr,
     HttpUrl,
     Json,
@@ -31,6 +30,7 @@ from pydantic import (
     constr,
     validator,
 )
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
