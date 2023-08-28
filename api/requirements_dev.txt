@@ -1,9 +1,9 @@
 bandit==1.7.5
 black==23.7.0
-coverage==7.2.7
+coverage==7.3.0
 flake8==6.1.0
 httpx==0.24.1
-locust==2.15.1
+locust==2.16.1
 pytest==7.4.0
 requests==2.31.0
 uvicorn==0.23.2
