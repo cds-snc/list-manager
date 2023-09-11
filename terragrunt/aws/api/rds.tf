@@ -2,7 +2,7 @@ module "rds" {
   source                  = "github.com/cds-snc/terraform-modules//rds?ref=v7.0.1"
   database_name           = "list_manager"
   name                    = "list-manager"
-  engine_version          = "12.16"
+  engine_version          = "12.15"
   instances               = 1
   username                = var.rds_username
   password                = var.rds_password
