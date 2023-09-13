@@ -14,6 +14,10 @@ env:
   TF_VAR_rds_password: ${{ secrets.TF_VARS_RDS_PASSWORD }}
   TF_VAR_slack_webhook_url: ${{ secrets.TF_VARS_SLACK_WEBHOOK_URL }}
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   terragrunt-apply:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'

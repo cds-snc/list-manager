@@ -10,6 +10,10 @@ env:
   GITHUB_SHA: ${{ github.sha }}
   REGISTRY: ${{ secrets.AWS_ACCOUNT }}.dkr.ecr.ca-central-1.amazonaws.com/list-manager
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   changes:
     runs-on: ubuntu-latest
