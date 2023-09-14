@@ -2,7 +2,7 @@ module "rds" {
   source                  = "github.com/cds-snc/terraform-modules//rds?ref=v7.0.2"
   database_name           = "list_manager"
   name                    = "list-manager"
-  engine_version          = "14.8"
+  engine_version          = "15.3"
   instances               = 1
   username                = var.rds_username
   password                = var.rds_password
@@ -11,7 +11,7 @@ module "rds" {
   backup_retention_period = 7
 
   preferred_backup_window      = "07:00-09:00"
-  preferred_maintenance_window = "thu:06:00-thu:07:00" # timezone is UTC
+  preferred_maintenance_window = "fri:06:00-fri:07:00" # timezone is UTC
   allow_major_version_upgrade  = true
 
   billing_tag_value = var.billing_code
