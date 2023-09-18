@@ -1,8 +1,8 @@
 bandit==1.7.5
-black==23.7.0
+black==23.9.1
 coverage==7.3.1
 flake8==6.1.0
-httpx==0.24.1
+httpx==0.25.0
 locust==2.16.1
 pytest==7.4.2
 requests==2.31.0
