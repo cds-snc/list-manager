@@ -39,7 +39,7 @@ services:
       OPENAPI_URL: "/openapi.json"
  
   db:
-    image: postgres:15.3@sha256:8775adb39f0db45cf4cdb3601380312ee5e9c4f53af0f89b7dc5cd4c9a78e4e8
+    image: postgres:16.0@sha256:f50efba2d6932111afb6f94f6354df93da75b41259dd2d5ef6a58b317ce9e74b
     volumes:
     - ./initdb:/docker-entrypoint-initdb.d
     restart: always
@@ -58,7 +58,7 @@ services:
       - "5433:5432"
   
   test-db:
-    image: postgres:15.3@sha256:8775adb39f0db45cf4cdb3601380312ee5e9c4f53af0f89b7dc5cd4c9a78e4e8
+    image: postgres:16.0@sha256:f50efba2d6932111afb6f94f6354df93da75b41259dd2d5ef6a58b317ce9e74b
     volumes:
     - ./initdb:/docker-entrypoint-initdb.d
     restart: always
