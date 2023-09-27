@@ -23,7 +23,6 @@ from models.Subscription import Subscription
 from typing import Optional
 from pydantic import (
     BaseModel,
-    BaseSettings,
     EmailStr,
     HttpUrl,
     Json,
@@ -31,6 +30,7 @@ from pydantic import (
     constr,
     validator,
 )
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
@@ -125,13 +125,13 @@ class ListCreatePayload(BaseModel):
     name: str
     language: str
     service_id: str
-    subscribe_email_template_id: Optional[UUID]
-    unsubscribe_email_template_id: Optional[UUID]
-    subscribe_phone_template_id: Optional[UUID]
-    unsubscribe_phone_template_id: Optional[UUID]
-    subscribe_redirect_url: Optional[HttpUrl]
-    confirm_redirect_url: Optional[HttpUrl]
-    unsubscribe_redirect_url: Optional[HttpUrl]
+    subscribe_email_template_id: Optional[UUID] = None
+    unsubscribe_email_template_id: Optional[UUID] = None
+    subscribe_phone_template_id: Optional[UUID] = None
+    unsubscribe_phone_template_id: Optional[UUID] = None
+    subscribe_redirect_url: Optional[HttpUrl] = None
+    confirm_redirect_url: Optional[HttpUrl] = None
+    unsubscribe_redirect_url: Optional[HttpUrl] = None
 
     @validator(
         "subscribe_email_template_id",
@@ -144,7 +144,7 @@ class ListCreatePayload(BaseModel):
         pre=True,
         allow_reuse=True,
     )
-    def blank_string(value, field):
+    def blank_string(value):
         if value == "":
             return None
         return value
@@ -478,7 +478,7 @@ class SubscriptionEvent(BaseModel):
     email: Optional[EmailStr] = None
     phone: Optional[str] = None
     list_id: str
-    service_api_key: Optional[str]
+    service_api_key: Optional[str] = None
 
     class Config:
         extra = "forbid"
@@ -722,7 +722,7 @@ class SendPayload(BaseModel):
     list_id: UUID
     template_id: UUID
     template_type: str
-    service_api_key: Optional[str]
+    service_api_key: Optional[str] = None
     job_name: Optional[str] = "Bulk email"
     unique: Optional[bool] = True
     personalisation: Optional[Json] = {}
@@ -857,7 +857,7 @@ def get_unsubscribe_link(subscription_id):
 
 class ListImportEmailPayload(BaseModel):
     list_id: UUID
-    emails: conlist(EmailStr, min_items=1, max_items=10000)
+    emails: conlist(EmailStr, min_length=1, max_length=10000)
 
     class Config:
         extra = "forbid"
@@ -906,7 +906,7 @@ def email_list_import(
 
 
 class ListImportPayload(BaseModel):
-    email: Optional[conlist(EmailStr, min_items=1, max_items=10000)]
+    email: Optional[conlist(EmailStr, min_length=1, max_length=10000)] = None
     phone: Optional[
         conlist(
             constr(
@@ -914,10 +914,10 @@ class ListImportPayload(BaseModel):
                 min_length=9,
                 max_length=15,
             ),
-            min_items=1,
-            max_items=10000,
+            min_length=1,
+            max_length=10000,
         )
-    ]
+    ] = None
 
     class Config:
         extra = "forbid"
