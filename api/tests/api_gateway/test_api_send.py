@@ -4,7 +4,6 @@ import uuid
 from unittest.mock import patch
 from requests import HTTPError
 from models.Subscription import Subscription
-from sqlalchemy import text
 
 
 @patch("api_gateway.api.get_notify_client")
@@ -37,7 +36,7 @@ def test_send_email(mock_client, list_fixture, client, session):
 
 @patch("api_gateway.api.get_notify_client")
 def test_send_email_with_personalisation(mock_client, list_fixture, client, session):
-    session.execute(text("TRUNCATE TABLE subscriptions"))
+    session.execute("""TRUNCATE TABLE subscriptions""")
     session.commit()
 
     subscription = Subscription(
