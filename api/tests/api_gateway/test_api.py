@@ -349,7 +349,7 @@ def test_edit_list_with_correct_id(session, client):
     assert response.json() == {"status": "OK"}
     assert response.status_code == 200
     session.expire_all()
-    list = session.query(List).get(list.id)
+    list = session.get(List, list.id)
     assert list.name == "edited_name"
     assert list.language == "edited_language"
     assert list.service_id == "edited_service_id"
@@ -372,7 +372,7 @@ def test_edit_list_without_supplying_service_id_and_name(session, client):
     assert response.json() == {"status": "OK"}
     assert response.status_code == 200
     session.expire_all()
-    list = session.query(List).get(list.id)
+    list = session.get(List, list.id)
     assert list.subscribe_email_template_id == "ea974231-002b-4889-87f1-0b9cf48e9411"
 
 

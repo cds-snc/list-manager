@@ -7,6 +7,7 @@ from fastapi import Depends, FastAPI, HTTPException, Response, Request, status
 from fastapi.responses import RedirectResponse, JSONResponse
 from clients.notify import NotificationsAPIClient
 from requests import HTTPError
+from sqlalchemy.engine.row import Row
 from sqlalchemy.exc import SQLAlchemyError, NoResultFound
 from sqlalchemy.sql.expression import func, cast
 from sqlalchemy.orm import Session
@@ -394,7 +395,7 @@ def update_list(
     _authorized: bool = Depends(verify_token),
 ):
     try:
-        list = session.query(List).get(list_id)
+        list = session.get(List, list_id)
         if list is None:
             raise NoResultFound
     except SQLAlchemyError:
@@ -426,7 +427,7 @@ def delete_list(
     _authorized: bool = Depends(verify_token),
 ):
     try:
-        list = session.query(List).get(list_id)
+        list = session.get(List, list_id)
         if list is None:
             raise NoResultFound
     except SQLAlchemyError:
@@ -457,7 +458,7 @@ def reset_list(
     _authorized: bool = Depends(verify_token),
 ):
     try:
-        list = session.query(List).get(list_id)
+        list = session.get(List, list_id)
         if list is None:
             raise NoResultFound
     except SQLAlchemyError:
@@ -513,7 +514,7 @@ def create_subscription(
         notifications_client = get_notify_client()
 
     try:
-        list = session.query(List).get(subscription_payload.list_id)
+        list = session.get(List, subscription_payload.list_id)
         if list is None:
             raise NoResultFound
     except SQLAlchemyError:
@@ -613,7 +614,7 @@ def confirm_subscription(
     subscription_id, response: Response, session: Session = Depends(get_db)
 ):
     try:
-        subscription = session.query(Subscription).get(subscription_id)
+        subscription = session.get(Subscription, subscription_id)
         if subscription is None:
             raise NoResultFound
 
@@ -651,7 +652,7 @@ def unsubscribe(
     notifications_client = get_notify_client()
 
     try:
-        subscription = session.query(Subscription).get(subscription_id)
+        subscription = session.get(Subscription, subscription_id)
         if subscription is None:
             raise NoResultFound
     except SQLAlchemyError:
@@ -659,7 +660,7 @@ def unsubscribe(
         return {"error": "subscription not found"}
 
     try:
-        list = session.query(List).get(subscription.list_id)
+        list = session.get(List, subscription.list_id)
 
         email = subscription.email
         phone = subscription.phone
@@ -800,6 +801,10 @@ def send_bulk_notify(subscription_count, send_payload, rows, recipient_limit=500
     template_type = send_payload.template_type.lower()
     # Split notifications into separate calls based on limit
     for i, row in enumerate(rows):
+        # Convert SQLAlchemy Row objects to dicts
+        if type(row) is Row:
+            row = row._mapping
+
         if i > 0 and (i % recipient_limit == 0):
             notify_bulk_subscribers.append(subscription_rows)
 
