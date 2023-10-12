@@ -15,7 +15,7 @@ resource "aws_cloudwatch_log_metric_filter" "lambda-429-errors" {
 
 resource "aws_cloudwatch_log_metric_filter" "lambda-api-errors" {
   name           = "api-errors"
-  pattern        = "ERROR? Error? error?"
+  pattern        = "?ERROR ?Error ?error"
   log_group_name = "/aws/lambda/${aws_lambda_function.api.function_name}"
 
   metric_transformation {
