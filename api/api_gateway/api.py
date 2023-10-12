@@ -11,7 +11,7 @@ from sqlalchemy.engine.row import Row
 from sqlalchemy.exc import SQLAlchemyError, NoResultFound
 from sqlalchemy.sql.expression import func, cast
 from sqlalchemy.orm import Session
-from sqlalchemy import String
+from sqlalchemy import String, text
 from database.db import db_session
 from logger import log
 
@@ -105,7 +105,7 @@ def version():
 
 
 def get_db_version(session):
-    query = "SELECT version_num FROM alembic_version"
+    query = text("SELECT version_num FROM alembic_version")
     full_name = session.execute(query).fetchone()[0]
     return full_name
 
