@@ -11,6 +11,17 @@
 		"PYTHONPATH": "./api"
 	},
 
+	"features": {
+		"aws-cli": {
+			"version": "latest"
+		},	
+		"terraform": {
+			"version": "1.6.1",
+			"tflint": "latest",
+			"terragrunt": "0.52.1"
+		}
+	},
+
 	"customizations": {
 		"vscode": {
 			"settings": {
