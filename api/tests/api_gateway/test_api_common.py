@@ -38,7 +38,7 @@ def test_healthcheck_success(mock_get_db_version, client):
 def test_healthcheck_failure(mock_log, mock_get_db_version, client):
     mock_get_db_version.side_effect = SQLAlchemyError()
     response = client.get("/healthcheck")
-    assert response.status_code == 200
+    assert response.status_code == 503
     expected_val = {"database": {"able_to_connect": False}}
     assert response.json() == expected_val
     # assert mock_log.error.assert_called_once_with(SQLAlchemyError())

@@ -110,14 +110,15 @@ def get_db_version(session):
     return full_name
 
 
-@app.get("/healthcheck")
-def healthcheck(session: Session = Depends(get_db)):
+@app.get("/healthcheck", status_code=200)
+def healthcheck(response: Response, session: Session = Depends(get_db)):
     try:
         full_name = get_db_version(session)
         db_status = {"able_to_connect": True, "db_version": full_name}
     except SQLAlchemyError as err:
         log.error(err)
         db_status = {"able_to_connect": False}
+        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
 
     return {"database": db_status}
 
