@@ -163,59 +163,6 @@ resource "aws_cloudwatch_metric_alarm" "api-invalid-auth-token-warning" {
   }
 }
 
-#
-# WAF: high percentage of blocked requests
-# 
-resource "aws_cloudwatch_metric_alarm" "waf-block-request-warning" {
-  alarm_name          = "waf-block-request-warning"
-  alarm_description   = "50% of requests being blocked in 5 minute period warning"
-  comparison_operator = "GreaterThanThreshold"
-  evaluation_periods  = "1"
-  threshold           = "50"
-  treat_missing_data  = "notBreaching"
-  alarm_actions       = [aws_sns_topic.warning.arn]
-  ok_actions          = [aws_sns_topic.warning.arn]
-
-  metric_query {
-    id          = "blocked_request_percent"
-    expression  = "100*blocked/(blocked+allowed)"
-    label       = "WAF blocked requests percent"
-    return_data = "true"
-  }
-
-  metric_query {
-    id = "blocked"
-    metric {
-      metric_name = "BlockedRequests"
-      namespace   = "AWS/WAFV2"
-      period      = "300"
-      stat        = "Sum"
-
-      dimensions = {
-        Rule   = "ALL"
-        Region = var.region
-        WebACL = aws_wafv2_web_acl.api_waf.name
-      }
-    }
-  }
-
-  metric_query {
-    id = "allowed"
-    metric {
-      metric_name = "AllowedRequests"
-      namespace   = "AWS/WAFV2"
-      period      = "300"
-      stat        = "Sum"
-
-      dimensions = {
-        Rule   = "ALL"
-        Region = var.region
-        WebACL = aws_wafv2_web_acl.api_waf.name
-      }
-    }
-  }
-}
-
 resource "aws_cloudwatch_metric_alarm" "route53_list_manager_health_check" {
   provider = aws.us-east-1
 
