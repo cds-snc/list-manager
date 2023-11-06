@@ -1,9 +1,9 @@
-alembic==1.12.0
+alembic==1.12.1
 aws-lambda-powertools==2.26.0
-boto3==1.28.68
+boto3==1.28.73
 bcrypt==4.0.1
 email-validator==2.1.0.post1
-fastapi==0.104.0
+fastapi==0.104.1
 logzero==1.7.0
 mangum==0.17.0
 notifications-python-client==8.1.0
