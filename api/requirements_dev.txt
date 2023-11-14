@@ -6,5 +6,5 @@ httpx==0.25.1
 locust==2.18.1
 pytest==7.4.3
 requests==2.31.0
-uvicorn==0.23.2
+uvicorn==0.24.0.post1
 setuptools>=65.5.1 # not directly required, pinned by Snyk to avoid a vulnerability
