@@ -1,9 +1,10 @@
 module "vpc" {
-  source            = "github.com/cds-snc/terraform-modules//vpc?ref=v8.0.0"
-  name              = var.product_name
-  billing_tag_value = var.billing_code
-  high_availability = true
-  enable_flow_log   = true
+  source             = "github.com/cds-snc/terraform-modules//vpc?ref=v9.0.4"
+  name               = var.product_name
+  billing_tag_value  = var.billing_code
+  cidrsubnet_newbits = 8
+  availability_zones = 3
+  enable_flow_log    = true
 }
 
 resource "aws_network_acl_rule" "https" {
