@@ -1,5 +1,5 @@
 module "vpc" {
-  source             = "github.com/cds-snc/terraform-modules//vpc?ref=v9.0.4"
+  source             = "github.com/cds-snc/terraform-modules//vpc?ref=v9.0.6"
   name               = var.product_name
   billing_tag_value  = var.billing_code
   cidrsubnet_newbits = 8
