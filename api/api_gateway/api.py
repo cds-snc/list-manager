@@ -825,9 +825,11 @@ def send_bulk_notify(subscription_count, send_payload, rows, recipient_limit=500
             subscription_rows.append(
                 [
                     row[template_type],
-                    get_unsubscribe_link(str(row["id"]))  # add unsub link
-                    if "email" in template_type
-                    else row["id"],  # phone notification untouched
+                    (
+                        get_unsubscribe_link(str(row["id"]))  # add unsub link
+                        if "email" in template_type
+                        else row["id"]
+                    ),  # phone notification untouched
                     *personalisation_values,
                 ]
             )
