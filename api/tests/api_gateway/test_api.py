@@ -423,9 +423,17 @@ def test_metrics(mock_mangum, context_fixture, capsys, metrics):
     mock_mangum.return_value = mock_asgi_handler
     main.handler({"httpMethod": "GET"}, context_fixture)
 
-    log = capsys.readouterr().out.strip()
+    logs = capsys.readouterr().out.strip().split("\n")
 
-    metrics_output = json.loads(log)
+    assert len(logs) == 2
+    metrics_startup = json.loads(logs[0])
+    metrics_output = json.loads(logs[1])
+
+    assert (
+        "ColdStart"
+        in metrics_startup["_aws"]["CloudWatchMetrics"][0]["Metrics"][0]["Name"]
+    )
+    assert metrics_startup["function_name"] == "api"
 
     metric_list = [
         "ListCreated",

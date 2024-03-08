@@ -1,5 +1,4 @@
 import main
-import json
 from unittest.mock import MagicMock, patch
 
 
@@ -12,14 +11,7 @@ def test_handler_api_gateway_event(mock_mangum, context_fixture, capsys):
     mock_asgi_handler.assert_called_once_with({"httpMethod": "GET"}, context_fixture)
 
     log = capsys.readouterr().out.strip()
-    metrics_output = json.loads(log)
-
     assert "ListManager" in log
-    assert (
-        "ColdStart"
-        in metrics_output["_aws"]["CloudWatchMetrics"][0]["Metrics"][0]["Name"]
-    )
-    assert metrics_output["function_name"] == "api"
 
 
 @patch("main.log")
