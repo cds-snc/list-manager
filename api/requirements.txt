@@ -6,7 +6,7 @@ email-validator==2.1.0.post1
 fastapi==0.110.0
 logzero==1.7.0
 mangum==0.17.0
-notifications-python-client==8.2.0
+notifications-python-client==9.0.0
 pydantic==1.10.14
 psycopg2-binary==2.9.9
 SQLAlchemy==2.0.27
