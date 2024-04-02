@@ -1,5 +1,5 @@
 module "rds" {
-  source                  = "github.com/cds-snc/terraform-modules//rds?ref=v9.2.5"
+  source                  = "github.com/cds-snc/terraform-modules//rds?ref=v9.2.6"
   database_name           = "list_manager"
   name                    = "list-manager"
   engine_version          = "15.4"
