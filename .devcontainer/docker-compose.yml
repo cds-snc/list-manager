@@ -34,7 +34,7 @@ services:
       OPENAPI_URL: "/openapi.json"
  
   db:
-    image: postgres:15.6@sha256:a72bcd42bfd486ab88fdbf25e5c00001a3af209f7a3e66ab25e2ba8c0cf76278
+    image: postgres:15.6@sha256:1ebd963e5c598f944a4e9ba27de4c95289d663dcc73731025aa53c5254094d8f
     volumes:
     - ./initdb:/docker-entrypoint-initdb.d
     restart: always
@@ -53,7 +53,7 @@ services:
       - "5433:5432"
   
   test-db:
-    image: postgres:15.6@sha256:a72bcd42bfd486ab88fdbf25e5c00001a3af209f7a3e66ab25e2ba8c0cf76278
+    image: postgres:15.6@sha256:1ebd963e5c598f944a4e9ba27de4c95289d663dcc73731025aa53c5254094d8f
     volumes:
     - ./initdb:/docker-entrypoint-initdb.d
     restart: always
@@ -70,7 +70,7 @@ services:
       - "5434:5432"
   
   localstack:
-    image: localstack/localstack@sha256:06403b6c35b5cc4b6b15652fc10965982853172890efa87010a9545efe8dd42e
+    image: localstack/localstack@sha256:e92bd64d2c89e30bbb67bb02fc494690dd94b3e016a9c44487c8a542ec7ed4b6
     hostname: localstack
     volumes:
       - "./data:/tmp/localstack"
