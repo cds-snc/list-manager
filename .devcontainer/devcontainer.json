@@ -16,9 +16,9 @@
 			"version": "latest"
 		},	
 		"terraform": {
-			"version": "1.6.1",
+			"version": "1.8.2",
 			"tflint": "latest",
-			"terragrunt": "0.52.1"
+			"terragrunt": "0.58.3"
 		}
 	},
 
