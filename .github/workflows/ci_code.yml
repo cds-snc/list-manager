@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:15.7@sha256:2d8059176e789c849701fc06d3f7834d4f6db52b74c89f7f3517c4540a3c38bd
+        image: postgres:15.7@sha256:261400cf1399540d2dfa62c4420916d419bf9cd835d118674535a3830444be6e
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -33,7 +33,7 @@ jobs:
           python-version: "3.9"
 
       - name: Setup node
-        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
+        uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4.0.3
         with:
           node-version: "14"
 
