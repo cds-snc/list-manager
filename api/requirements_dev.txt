@@ -1,10 +1,10 @@
 bandit==1.7.9
 black==24.4.2
-coverage==7.6.0
-flake8==7.1.0
+coverage==7.6.1
+flake8==7.1.1
 httpx==0.27.0
 locust==2.29.1
 pytest==8.3.2
 requests==2.32.3
-uvicorn==0.30.3
+uvicorn==0.30.6
 setuptools>=65.5.1 # not directly required, pinned by Snyk to avoid a vulnerability
