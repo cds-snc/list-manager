@@ -3,7 +3,7 @@ aws-lambda-powertools==2.43.1
 boto3==1.35.14
 bcrypt==4.2.0
 email-validator==2.2.0
-fastapi==0.112.2
+fastapi==0.114.0
 logzero==1.7.0
 mangum==0.17.0
 notifications-python-client==9.1.0
