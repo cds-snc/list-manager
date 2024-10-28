@@ -1,6 +1,6 @@
 alembic==1.13.3
 aws-lambda-powertools==2.43.1
-boto3==1.35.39
+boto3==1.35.44
 bcrypt==4.2.0
 email-validator==2.2.0
 fastapi==0.115.2
@@ -8,5 +8,5 @@ logzero==1.7.0
 mangum==0.19.0
 notifications-python-client==9.1.0
 pydantic==1.10.18
-psycopg2-binary==2.9.9
-SQLAlchemy==2.0.35
+psycopg2-binary==2.9.10
+SQLAlchemy==2.0.36
