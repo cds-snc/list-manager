@@ -70,7 +70,7 @@ services:
       - "5434:5432"
   
   localstack:
-    image: localstack/localstack@sha256:25941d5d706b142b618d075006419bdbf8f47a3c4b38607a3b226967712edeb2
+    image: localstack/localstack@sha256:b5a836b0d19e5be0c333f8a8965a36f285637c5cdba2d06df5b033c6f65c35c5
     hostname: localstack
     volumes:
       - "./data:/tmp/localstack"
