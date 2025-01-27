@@ -1,4 +1,4 @@
-alembic==1.14.0
+alembic==1.14.1
 aws-lambda-powertools==2.43.1
 boto3==1.35.97
 bcrypt==4.2.1
@@ -7,6 +7,6 @@ fastapi==0.115.6
 logzero==1.7.0
 mangum==0.19.0
 notifications-python-client==9.1.0
-pydantic==1.10.20
+pydantic==1.10.21
 psycopg2-binary==2.9.10
 SQLAlchemy==2.0.37
