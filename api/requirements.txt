@@ -1,7 +1,7 @@
 alembic==1.14.1
 aws-lambda-powertools==2.43.1
-boto3==1.36.26
-bcrypt==4.2.1
+boto3==1.37.4
+bcrypt==4.3.0
 email-validator==2.2.0
 fastapi==0.115.8
 logzero==1.7.0
