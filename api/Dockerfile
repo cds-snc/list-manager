@@ -1,7 +1,7 @@
 # Define function directory
 ARG FUNCTION_DIR="/function"
 
-FROM python:3.9-slim-buster@sha256:320a7a4250aba4249f458872adecf92eea88dc6abd2d76dc5c0f01cac9b53990
+FROM python:3.13-slim@sha256:f3614d98f38b0525d670f287b0474385952e28eb43016655dd003d0e28cf8652
 
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install --no-install-recommends ca-certificates curl git gstreamer1.0-libav libnss3-tools libatk-bridge2.0-0 libcups2-dev libxkbcommon-x11-0 libxcomposite-dev libxrandr2 libgbm-dev libgtk-3-0 libxshmfence-dev gnupg2 postgresql-client openssh-client python3-pip vim wget xz-utils zsh entr \
@@ -16,7 +16,7 @@ ENV PYTHONPATH=/pymodules
 COPY ./requirements.txt ${FUNCTION_DIR}
 
 
-RUN python3.9 -m pip install -r ${FUNCTION_DIR}/requirements.txt --target /pymodules
+RUN python3.13 -m pip install -r ${FUNCTION_DIR}/requirements.txt --target /pymodules
 
 # Install the runtime interface client
 RUN pip install \
