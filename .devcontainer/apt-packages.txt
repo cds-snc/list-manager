@@ -19,4 +19,3 @@ vim
 xz-utils
 zsh
 postgresql-client
-netcat

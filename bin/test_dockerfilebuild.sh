@@ -8,7 +8,7 @@ EOF
 
 DOCKER_BUILDKIT=0 docker build . -f .devcontainer/Dockerfile \
   -t foo:bar \
-  --build-arg VARIANT="3.9" \
+  --build-arg VARIANT="3.13" \
   --build-arg INSTALL_NODE="true" \
   --build-arg NODE_VERSION="lts/*" \
   --build-arg SHELLCHECK_VERSION="0.7.2" \
