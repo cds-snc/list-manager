@@ -3,8 +3,8 @@ black==24.10.0
 coverage==7.8.0
 flake8==7.2.0
 httpx==0.28.1
-locust==2.34.0
+locust==2.34.1
 pytest==8.3.5
 requests==2.32.3
-uvicorn==0.34.0
+uvicorn==0.34.1
 setuptools>=65.5.1 # not directly required, pinned by Snyk to avoid a vulnerability
