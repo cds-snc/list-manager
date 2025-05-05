@@ -3,7 +3,7 @@ black==24.10.0
 coverage==7.8.0
 flake8==7.2.0
 httpx==0.28.1
-locust==2.35.0
+locust==2.36.2
 pytest==8.3.5
 requests==2.32.3
 uvicorn==0.34.2
