@@ -162,23 +162,3 @@ resource "aws_cloudwatch_metric_alarm" "api-invalid-auth-token-warning" {
     service = "api"
   }
 }
-
-resource "aws_cloudwatch_metric_alarm" "route53_list_manager_health_check" {
-  provider = aws.us-east-1
-
-  alarm_name          = "route53-list-manager-health-check"
-  alarm_description   = "Health check failing for the list manager"
-  comparison_operator = "LessThanThreshold"
-  metric_name         = "HealthCheckStatus"
-  namespace           = "AWS/Route53"
-  period              = "60"
-  evaluation_periods  = "2"
-  statistic           = "Average"
-  threshold           = "1"
-  treat_missing_data  = "breaching"
-  alarm_actions       = [aws_sns_topic.warning_us_east.arn]
-  ok_actions          = [aws_sns_topic.warning_us_east.arn]
-  dimensions = {
-    HealthCheckId = aws_route53_health_check.list_manager.id
-  }
-}
