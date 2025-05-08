@@ -11,16 +11,3 @@ resource "aws_route53_record" "list_manager_A" {
     evaluate_target_health = false
   }
 }
-
-resource "aws_route53_health_check" "list_manager" {
-  fqdn              = var.domain_name
-  port              = 443
-  type              = "HTTPS"
-  resource_path     = "/healthcheck"
-  failure_threshold = "3"
-  request_interval  = "30"
-
-  tags = {
-    CostCenter = var.billing_code
-  }
-}
